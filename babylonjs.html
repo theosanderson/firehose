@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bluesky Firehose - Babylon.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/6.48.1/babylon.js"></script>
+    <style>
+        body { margin: 0; }
+        #renderCanvas {
+            width: 100%;
+            height: 100vh;
+            touch-action: none;
+        }
+        #temporary-loading-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: white;
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body style="background-color: #111;">
+    <canvas id="renderCanvas"></canvas>
+    <div id="temporary-loading-message">Loading...</div>
+    
+    <script>
+        // TexturePool class for managing dynamic textures
+        class TexturePool {
+            constructor(scene, size = 50) {
+                this.scene = scene;
+                this.shortPool = [];  // For 1-2 lines (128px height)
+                this.tallPool = [];   // For 3+ lines (256px height)
+                this.inUse = new Set();
+                this.initPools(size);
+            }
+
+            initPools(size) {
+                const shortSize = Math.floor(size * 0.7);
+                const tallSize = size - shortSize;
+
+                for (let i = 0; i < shortSize; i++) {
+                    const texture = new BABYLON.DynamicTexture("shortTexture" + i, {
+                        width: 700,
+                        height: 128
+                    }, this.scene, true);
+                    this.shortPool.push({
+                        texture,
+                        size: 'short'
+                    });
+                }
+
+                for (let i = 0; i < tallSize; i++) {
+                    const texture = new BABYLON.DynamicTexture("tallTexture" + i, {
+                        width: 700,
+                        height: 256
+                    }, this.scene, true);
+                    this.tallPool.push({
+                        texture,
+                        size: 'tall'
+                    });
+                }
+            }
+
+            getTextureSize(text) {
+                if (!text) return 'short';
+                const cleanText = text.toString().trim();
+                if (cleanText.length === 0) return 'short';
+
+                const hasEmojis = /[\u{1F300}-\u{1F9FF}]/u.test(cleanText);
+                const hasSpecialChars = /[🔥\u{1F525}]/u.test(cleanText);
+                
+                if (cleanText.length > 120) {
+                    return 'tall';
+                }
+                return 'short';
+            }
+
+            acquire(text) {
+                const size = this.getTextureSize(text);
+                const pool = size === 'short' ? this.shortPool : this.tallPool;
+
+                const textureObj = pool.find(obj => !this.inUse.has(obj));
+                if (textureObj) {
+                    this.inUse.add(textureObj);
+                    textureObj.texture.clear();
+                    return textureObj;
+                }
+
+                const height = size === 'short' ? 128 : 256;
+                const newTexture = new BABYLON.DynamicTexture(
+                    "newTexture" + Math.random(),
+                    { width: 700, height },
+                    this.scene,
+                    true
+                );
+                const newObj = {
+                    texture: newTexture,
+                    size: size
+                };
+                pool.push(newObj);
+                this.inUse.add(newObj);
+                return newObj;
+            }
+
+            release(textureObj) {
+                if (textureObj) {
+                    this.inUse.delete(textureObj);
+                }
+            }
+        }
+
+        // Initialize Babylon.js scene
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+        const scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+
+        // Camera setup point left
+        const camera = new BABYLON.ArcRotateCamera("camera", Math.PI/2, Math.PI/2, 10, new BABYLON.Vector3(0, 0, 0), scene);
+        
+        // Add camera controls
+        const maxRotation = BABYLON.Tools.ToRadians(15);
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        const mouseSensitivity = 0.003;
+
+        scene.onPointerDown = function(evt) {
+            isDragging = true;
+            previousMousePosition = {
+                x: evt.clientX,
+                y: evt.clientY
+            };
+        };
+
+        scene.onPointerMove = function(evt) {
+            if (!isDragging) return;
+
+            const deltaMove = {
+                x: evt.clientX - previousMousePosition.x,
+                y: evt.clientY - previousMousePosition.y
+            };
+
+            const newRotationY = camera.rotation.y + deltaMove.x * mouseSensitivity;
+            const newRotationX = camera.rotation.x + deltaMove.y * mouseSensitivity;
+
+            camera.rotation.y = BABYLON.Scalar.Clamp(newRotationY, -maxRotation, maxRotation);
+            camera.rotation.x = BABYLON.Scalar.Clamp(newRotationX, -0.1 - maxRotation, -0.1 + maxRotation);
+
+            previousMousePosition = {
+                x: evt.clientX,
+                y: evt.clientY
+            };
+        };
+
+        scene.onPointerUp = function() {
+            isDragging = false;
+        };
+
+        // Create tunnel
+        const tunnelLength = 40;
+   
+        // Initialize texture pool
+        const texturePool = new TexturePool(scene);
+        const messageObjects = [];
+
+        function wrapText(context, text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = context.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        function updateTextTexture(textureObj, text, specialColor) {
+            const texture = textureObj.texture;
+            const context = texture.getContext();
+            
+            // Clear with transparent background
+            context.clearRect(0, 0, texture.getSize().width, texture.getSize().height);
+            
+            const fontSize = 32;
+            context.font = `bold ${fontSize}px sans-serif`;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+
+            const maxWidth = 650;
+            const lines = wrapText(context, text, maxWidth);
+            const lineHeight = fontSize * 1.1;
+            const totalHeight = lines.length * lineHeight;
+            const startY = (texture.getSize().height - totalHeight) / 2;
+
+            let r = Math.floor(Math.random() * 200 + 55);
+            let g = Math.floor(Math.random() * 200 + 55);
+            let b = Math.floor(Math.random() * 200 + 55);
+
+            if (specialColor) {
+                r = Math.floor(Math.random() * 100 + 155);
+                g = Math.floor(Math.random() * 100 + 155);
+                b = Math.floor(Math.random() * 100 + 155);
+            }
+
+            lines.forEach((line, index) => {
+                const y = startY + (index * lineHeight) + lineHeight/2;
+                
+                // Add glow effect
+                context.shadowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
+                context.shadowBlur = 15;
+                context.shadowOffsetX = 0;
+                context.shadowOffsetY = 0;
+                
+                // Main text
+                context.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+                context.fillText(line, texture.getSize().width/2, y);
+            });
+            
+            texture.update(true); // Force update with alpha
+            return { 
+                textureObj,
+                lineCount: lines.length
+            };
+        }
+
+        function createMessage(text) {
+            let wall = Math.floor(Math.random() * 4.13);
+            if (text.includes('🔥') || wall > 3) {
+                wall = -1;
+            }
+            document.getElementById('temporary-loading-message').style.display = 'none';
+
+            const textureObj = texturePool.acquire(text);
+            const { lineCount } = updateTextTexture(textureObj, text, wall === -1);
+            
+            const height = Math.max(1.5, lineCount * 0.75);
+            const plane = BABYLON.MeshBuilder.CreatePlane("message", {
+                width: 7,
+                height: height
+            }, scene);
+
+            const material = new BABYLON.StandardMaterial("messageMat", scene);
+            material.diffuseTexture = textureObj.texture;
+            material.specularColor = new BABYLON.Color3(0, 0, 0);
+            material.emissiveColor = new BABYLON.Color3(1, 1, 1);
+            material.backFaceCulling = false;
+            
+            // Enable transparency
+            material.diffuseTexture.hasAlpha = true;
+            material.useAlphaFromDiffuseTexture = true;
+            material.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
+            
+            plane.material = material;
+
+            const randomOffset = Math.random() * 0.5;
+            plane.position.z = -tunnelLength + randomOffset;
+
+            if (wall === -1) {
+                const centerExtent = 10;
+                const centerExtentX = 7;
+                const getCoordsNotInCenter = () => {
+                    const x = (Math.random()) * centerExtentX - centerExtentX/2;
+                    const y = (Math.random()) * centerExtent - centerExtent/2;
+                    if (Math.sqrt(x*x + y*y) < 2) {
+                        return getCoordsNotInCenter();
+                    }
+                    return { x, y };
+                };
+                const { x, y } = getCoordsNotInCenter();
+                plane.position.x = x;
+                plane.position.y = y;
+            } else {
+                switch(wall) {
+                    case 0:
+                        plane.position.x = 7.4;
+                        plane.position.y = Math.random() * 12 - 6;
+                        plane.rotation.y = -Math.PI/2;
+                        break;
+                    case 1:
+                        plane.position.x = -7.4;
+                        plane.position.y = Math.random() * 12 - 6;
+                        plane.rotation.y = Math.PI/2;
+                        break;
+                    case 2:
+                        plane.position.x = Math.random() * 12 - 6;
+                        plane.position.y = 7.4;
+                        plane.rotation.x = Math.PI/2;
+                        break;
+                    case 3:
+                        plane.position.x = Math.random() * 12 - 6;
+                        plane.position.y = -7.4;
+                        plane.rotation.x = -Math.PI/2;
+                        break;
+                }
+            }
+
+            messageObjects.push({
+                mesh: plane,
+                textureObj: textureObj,
+                speed: 0.5 * (0.08 + Math.random() * 0.12),
+                special: wall === -1
+            });
+        }
+
+        // WebSocket connection
+        const ws = new WebSocket('wss://bsky-relay.c.theo.io/subscribe?wantedCollections=app.bsky.feed.post');
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.commit && data.commit.record && data.commit.record.text) {
+                createMessage(data.commit.record.text);
+            }
+        };
+
+        // Animation loop
+        engine.runRenderLoop(function() {
+            for (let i = messageObjects.length - 1; i >= 0; i--) {
+                const message = messageObjects[i];
+                message.mesh.position.z += message.speed;
+
+                if (message.mesh.position.z > 10) {
+                    message.mesh.dispose();
+                    texturePool.release(message.textureObj);
+                    messageObjects.splice(i, 1);
+                }
+            }
+            scene.render();
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            engine.resize();
+        });
+    </script>
+</body>
+</html>
