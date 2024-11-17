@@ -144,7 +144,9 @@ const urlParams = new URLSearchParams(window.location.search);
         camera.rotation.y = Math.PI;
         camera.rotation.x = 0.15;
 
-        camera.fov = 1.7;
+        camera.fov = 1.6;
+        camera.position.z = 8;
+        camera.position.y = 1;
         camera.maxZ= 50;
         // Add camera controls
         const maxRotation = BABYLON.Tools.ToRadians(15);
