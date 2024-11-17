@@ -95,7 +95,7 @@ class BlueSkyViz {
         this.camera = new UniversalCamera("camera", new Vector3(0, 0, 0), this.scene);
         this.camera.rotation.y = Math.PI;
         this.camera.rotation.x = 0.15;
-        this.camera.fov = 1.7;
+        this.camera.fov = 1.85;
         this.camera.position.z = 8;
         this.camera.position.y = 1;
         this.camera.maxZ = 50;
@@ -161,7 +161,7 @@ class BlueSkyViz {
             return;
         }
 
-        if (text.includes('🔥') || wall > 3) {
+        if ( wall > 3) {
             wall = -1;
         }
 
