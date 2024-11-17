@@ -1,200 +1,166 @@
 <!DOCTYPE html>
-<!--
-https://github.com/theosanderson/firehose
--->
 <html>
 <head>
-    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-NDR7D0LP60"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-NDR7D0LP60');
-    </script>
-    <title>Bluesky Firehose</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <title>Bluesky Firehose - Babylon.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babylonjs/6.48.1/babylon.js"></script>
     <style>
         body { margin: 0; }
-        canvas { display: block; }
+        #renderCanvas {
+            width: 100%;
+            height: 100vh;
+            touch-action: none;
+        }
+        #temporary-loading-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: white;
+            font-family: sans-serif;
+        }
     </style>
-    <meta property="og:title" content="Bluesky Firehose" />
-    <meta property="og:description" content="The bluesky firehose visualised in 3D" />
 </head>
-<body
-    style="background-color: #111; color: white; "></body>
-    <div id="temporary-loading-message" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; color: white; font-family: sans-serif;">Loading...</div>
+<body style="background-color: #111;">
+    <canvas id="renderCanvas"></canvas>
+    <div id="temporary-loading-message">Loading...</div>
+    
     <script>
-        // Texture Pool Manager
-        class TexturePool {
-    constructor(size = 50) {
-        // Create separate pools for different texture heights
-        this.shortPool = [];  // For 1-2 lines (128px height)
-        this.tallPool = [];   // For 3+ lines (256px height)
-        this.inUse = new Set();
-        this.initPools(size);
-    }
 
-    initPools(size) {
-        // Distribute the pool size
-        const shortSize = Math.floor(size * 0.7);  // 70% short textures
-        const tallSize = size - shortSize;         // 30% tall textures
-
-        // Initialize short textures (700x128)
-        for (let i = 0; i < shortSize; i++) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 700;
-            canvas.height = 128;
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.needsUpdate = true;
-            if(window.supersharp){
-                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-            }
-            this.shortPool.push({
-                texture,
-                canvas,
-                context: canvas.getContext('2d'),
-                size: 'short'
-            });
-        }
-
-        // Initialize tall textures (700x256)
-        for (let i = 0; i < tallSize; i++) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 700;
-            canvas.height = 256;
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.needsUpdate = true;
-            if(window.supersharp){
-                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-            }
-            this.tallPool.push({
-                texture,
-                canvas,
-                context: canvas.getContext('2d'),
-                size: 'tall'
-            });
-        }
-    }
-
-    getTextureSize(text) {
-     
-        // Handle undefined or empty text
-        if (!text) return 'short';
-        
-        // Clean the text and handle special characters
-        const cleanText = text.toString().trim();
-        if (cleanText.length === 0) return 'short';
-
-        // Use tall texture for longer text or special characters
-        const hasEmojis = /[\u{1F300}-\u{1F9FF}]/u.test(cleanText);
-        const hasSpecialChars = /[🔥\u{1F525}]/u.test(cleanText);
-        
-        if ( cleanText.length > 120) {
-            return 'tall';
-        }
-        
-        return 'short';
-    }
-
-    acquire(text) {
-        const size = this.getTextureSize(text);
-        const pool = size === 'short' ? this.shortPool : this.tallPool;
-
-        // Try to get an available texture from the appropriate pool
-        const textureObj = pool.find(obj => !this.inUse.has(obj));
-        if (textureObj) {
-            this.inUse.add(textureObj);
-            textureObj.context.clearRect(0, 0, textureObj.canvas.width, textureObj.canvas.height);
-            return textureObj;
-        }
-
-        // Fallback to any available texture
-        const anyAvailable = [...this.shortPool, ...this.tallPool]
-            .find(obj => !this.inUse.has(obj));
-        if (anyAvailable) {
-            this.inUse.add(anyAvailable);
-            anyAvailable.context.clearRect(0, 0, anyAvailable.canvas.width, anyAvailable.canvas.height);
-            return anyAvailable;
-        }
-
-        // Create new texture if none available
-        //console.warn(`${size} texture pool exhausted, creating new texture`);
-        const height = size === 'short' ? 128 : 256;
-        
-        const newCanvas = document.createElement('canvas');
-        newCanvas.width = 700;
-        newCanvas.height = height;
-        const newTexture = new THREE.CanvasTexture(newCanvas);
-        newTexture.needsUpdate = true;
-        if(window.supersharp){
-            newTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-        }
-        
-        const newObj = {
-            texture: newTexture,
-            canvas: newCanvas,
-            context: newCanvas.getContext('2d'),
-            size: size
-        };
-        pool.push(newObj);
-        this.inUse.add(newObj);
-        return newObj;
-    }
-
-    release(textureObj) {
-        if (textureObj) {
-            this.inUse.delete(textureObj);
-        }
-    }
-}
-
-        const urlParams = new URLSearchParams(window.location.search);
+const urlParams = new URLSearchParams(window.location.search);
         window.discardFrac = urlParams.get('discardFrac');
         window.discardFrac = window.discardFrac ? parseFloat(window.discardFrac) : 0.0;
         window.speed = urlParams.get('speed');
         window.speed = window.speed ? parseFloat(window.speed) : 0.5;
-        window.supersharp = urlParams.get('supersharp');
 
-        const texturePool = new TexturePool();
-        let rotationDir = 1;
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000);
-        scene.fog = new THREE.Fog(0x000000, 35, 40);
+        // TexturePool class for managing dynamic textures
+        class TexturePool {
+            constructor(scene, size = 50) {
+                this.scene = scene;
+                this.shortPool = [];  // For 1-2 lines (128px height)
+                this.tallPool = [];   // For 3+ lines (256px height)
+                this.inUse = new Set();
+                this.initPools(size);
+            }
 
-        const camera = new THREE.PerspectiveCamera(110, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.autoClear = false;
-        renderer.sortObjects = false;
-        document.body.appendChild(renderer.domElement);
+            initPools(size) {
+                const shortSize = Math.floor(size * 0.7);
+                const tallSize = size - shortSize;
 
-        // Mouse control variables
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-        const maxRotation = THREE.MathUtils.degToRad(15);
-        const mouseSensitivity = 0.00003;
+                for (let i = 0; i < shortSize; i++) {
+                    const texture = new BABYLON.DynamicTexture("shortTexture" + i, {
+                        width: 700,
+                        height: 128
+                    }, this.scene, true);
+                    this.shortPool.push({
+                        texture,
+                        size: 'short'
+                    });
+                }
 
-        const regularScene = new THREE.Scene();
-        regularScene.background = new THREE.Color(0x000000);
-        regularScene.fog = new THREE.Fog(0x000000, 35, 40);
+                for (let i = 0; i < tallSize; i++) {
+                    const texture = new BABYLON.DynamicTexture("tallTexture" + i, {
+                        width: 700,
+                        height: 256
+                    }, this.scene, true);
+                    this.tallPool.push({
+                        texture,
+                        size: 'tall'
+                    });
+                }
+            }
 
-        const specialScene = new THREE.Scene();
-        specialScene.fog = new THREE.Fog(0x000000, 35, 40);
+            getTextureSize(text) {
+                if (!text) return 'short';
+                const cleanText = text.toString().trim();
+                if (cleanText.length === 0) return 'short';
 
-        const tunnelLength = 40;
-        const tunnelGeometry = new THREE.BoxGeometry(15, 15, tunnelLength);
-        const tunnelMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0x111111, 
-            side: THREE.BackSide 
-        });
-        const tunnel = new THREE.Mesh(tunnelGeometry, tunnelMaterial);
-      
+                const hasEmojis = /[\u{1F300}-\u{1F9FF}]/u.test(cleanText);
+                const hasSpecialChars = /[🔥\u{1F525}]/u.test(cleanText);
+                
+                if (cleanText.length > 120) {
+                    return 'tall';
+                }
+                return 'short';
+            }
+
+            acquire(text) {
+                const size = this.getTextureSize(text);
+                const pool = size === 'short' ? this.shortPool : this.tallPool;
+
+                const textureObj = pool.find(obj => !this.inUse.has(obj));
+                if (textureObj) {
+                    this.inUse.add(textureObj);
+                    textureObj.texture.clear();
+                    return textureObj;
+                }
+
+                const height = size === 'short' ? 128 : 256;
+                const newTexture = new BABYLON.DynamicTexture(
+                    "newTexture" + Math.random(),
+                    { width: 700, height },
+                    this.scene,
+                    true
+                );
+                const newObj = {
+                    texture: newTexture,
+                    size: size
+                };
+                pool.push(newObj);
+                this.inUse.add(newObj);
+                return newObj;
+            }
+
+            release(textureObj) {
+                if (textureObj) {
+                    this.inUse.delete(textureObj);
+                }
+            }
+        }
+
+        // Initialize Babylon.js scene
+        const canvas = document.getElementById("renderCanvas");
+        const engine = new BABYLON.Engine(canvas, true);
+        const scene = new BABYLON.Scene(engine);
+        scene.setRenderingOrder(0, null, null, (a, b) => {
+    // Get the meshes
+    const meshA = a.getMesh();
+    const meshB = b.getMesh();
+    return meshA.renderOrder - meshB.renderOrder;
+});
+        scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+
+        // Add linear fog
+        scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
+       
+        scene.fogColor = new BABYLON.Color3(0, 0, 0);
+        scene.fogStart = 35
+        scene.fogEnd = 40
+
+
+        // Camera setup point left
+        const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 0, 0), scene);
+        // rotate 180 degrees
+        camera.rotation.y = Math.PI;
+        camera.rotation.x = 0.15;
+
+        camera.fov = 1.7;
         camera.position.z = 8;
         camera.position.y = 1;
-        camera.rotation.x = -0.1;
+        camera.maxZ= 50;
+        // Add camera controls
+        const maxRotation = BABYLON.Tools.ToRadians(15);
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        const mouseSensitivity = 0.003;
 
+
+        // Create tunnel
+        const tunnelLength = 40;
+   
+        // Initialize texture pool
+        const texturePool = new TexturePool(scene);
         const messageObjects = [];
-        let lastTime = 0;
 
         function wrapText(context, text, maxWidth) {
             const words = text.split(' ');
@@ -216,10 +182,11 @@ https://github.com/theosanderson/firehose
         }
 
         function updateTextTexture(textureObj, text, specialColor) {
-            const { context, texture } = textureObj;
-            const canvas = textureObj.canvas;
+            const texture = textureObj.texture;
+            const context = texture.getContext();
             
-            context.clearRect(0, 0, canvas.width, canvas.height);
+            // Clear with transparent background
+            context.clearRect(0, 0, texture.getSize().width, texture.getSize().height);
             
             const fontSize = 32;
             context.font = `bold ${fontSize}px sans-serif`;
@@ -230,7 +197,7 @@ https://github.com/theosanderson/firehose
             const lines = wrapText(context, text, maxWidth);
             const lineHeight = fontSize * 1.1;
             const totalHeight = lines.length * lineHeight;
-            const startY = (canvas.height - totalHeight) / 2;
+            const startY = (texture.getSize().height - totalHeight) / 2;
 
             let r = Math.floor(Math.random() * 200 + 55);
             let g = Math.floor(Math.random() * 200 + 55);
@@ -241,28 +208,32 @@ https://github.com/theosanderson/firehose
                 g = Math.floor(Math.random() * 100 + 155);
                 b = Math.floor(Math.random() * 100 + 155);
             }
-            const fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
 
             lines.forEach((line, index) => {
                 const y = startY + (index * lineHeight) + lineHeight/2;
                 
+                // Shadow
+               
                 context.shadowColor = 'rgba(0, 0, 0, 0.8)';
                 context.shadowBlur = 15;
                 context.shadowOffsetX = 0;
                 context.shadowOffsetY = 0;
                 
-                context.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                
+                // Stroke black
+                context.strokeStyle = 'rgba(0, 0, 0, 0.9)';
                 context.lineWidth = 6;
-                context.strokeText(line, canvas.width/2, y);
+                context.strokeText(line, texture.getSize().width/2, y);
+
+
+                // Main text
+                context.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+                context.fillText(line, texture.getSize().width/2, y);
+
                 
-                context.fillStyle = 'rgba(255, 255, 255, 0.85)';
-                context.fillText(line, canvas.width/2, y);
-                
-                context.fillStyle = fillStyle;
-                context.fillText(line, canvas.width/2, y);
             });
             
-            texture.needsUpdate = true;
+            texture.update(true); // Force update with alpha
             return { 
                 textureObj,
                 lineCount: lines.length
@@ -270,7 +241,13 @@ https://github.com/theosanderson/firehose
         }
 
         function createMessage(text) {
-            let wall = Math.floor(Math.random() * 4.03);
+            let wall = Math.floor(Math.random() * 4.04);
+
+            if(wall !== -1 && window.discardFrac && Math.random() < window.discardFrac) {
+              
+                return;
+            }
+
             if (text.includes('🔥') || wall > 3) {
                 wall = -1;
             }
@@ -280,83 +257,83 @@ https://github.com/theosanderson/firehose
             const { lineCount } = updateTextTexture(textureObj, text, wall === -1);
             
             const height = Math.max(1.5, lineCount * 0.75);
-            const geometry = new THREE.PlaneGeometry(7, height);
+            const plane = BABYLON.MeshBuilder.CreatePlane("message", {
+                width: 7,
+                height: height
+            }, scene);
+
+            const material = new BABYLON.StandardMaterial("messageMat", scene);
+            material.depthBias = Math.round(Math.random() * 10);
+            material.diffuseTexture = textureObj.texture;
+            material.specularColor = new BABYLON.Color3(0, 0, 0);
+            material.emissiveColor = new BABYLON.Color3(1, 1, 1);
+            material.backFaceCulling = false;
             
-            const randomOffset = Math.random() * 0.5;
+            // Enable transparency
+            material.diffuseTexture.hasAlpha = true;
+            material.useAlphaFromDiffuseTexture = true;
+            material.transparencyMode = BABYLON.Material.MATERIAL_ALPHABLEND;
+            
+            plane.material = material;
 
-            if(wall !== -1 && window.discardFrac && Math.random() < window.discardFrac) {
-                texturePool.release(textureObj);
-                return;
-            }
+            const randomOffset = Math.random() * 0;
+            plane.position.z = -tunnelLength + randomOffset;
 
-            const material = new THREE.MeshBasicMaterial({ 
-                map: textureObj.texture,
-                transparent: true,
-                opacity: 1,
-                depthWrite: false,
-                depthTest: wall === -1 ? false : true,
-                side: THREE.FrontSide
-            });
-
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.position.z = -tunnelLength + randomOffset;
-            mesh.userData.textureObj = textureObj;
-
-            switch(wall) {
-                case -1:
-                    const centerExtent = 10;
-                    const centerExtentX = 7;
-                    const getCoordsNotInCenter = () => {
-                        const x = (Math.random()) * centerExtentX - centerExtentX/2;
-                        const y = (Math.random()) * centerExtent - centerExtent/2;
-                        if (Math.sqrt(x*x + y*y) < 2) {
-                            return getCoordsNotInCenter();
-                        }
-                        return { x, y };
-                    };
-                    const { x, y } = getCoordsNotInCenter();
-                    mesh.position.x = x;
-                    mesh.position.y = y;
-                    mesh.special = true;
-                    mesh.renderOrder = Infinity;
-                    specialScene.add(mesh);
-                    break;
-                default:
-                    switch(wall) {
-                        case 0:
-                            mesh.position.x = 7.4;
-                            mesh.position.y = Math.random() * 12 - 6;
-                            mesh.rotation.y = -Math.PI/2;
-                            break;
-                        case 1:
-                            mesh.position.x = -7.4;
-                            mesh.position.y = Math.random() * 12 - 6;
-                            mesh.rotation.y = Math.PI/2;
-                            break;
-                        case 2:
-                            mesh.position.x = Math.random() * 12 - 6;
-                            mesh.position.y = 7.4;
-                            mesh.rotation.x = Math.PI/2;
-                            break;
-                        case 3:
-                            mesh.position.x = Math.random() * 12 - 6;
-                            mesh.position.y = -7.4;
-                            mesh.rotation.x = -Math.PI/2;
-                            break;
+            if (wall === -1) {
+                const centerExtent = 10;
+                const centerExtentX = 7;
+                const getCoordsNotInCenter = () => {
+                    const x = (Math.random()) * centerExtentX - centerExtentX/2;
+                    const y = (Math.random()) * centerExtent - centerExtent/2;
+                    if (Math.sqrt(x*x + y*y) < 2) {
+                        return getCoordsNotInCenter();
                     }
-                    regularScene.add(mesh);
+                    return { x, y };
+                };
+                const { x, y } = getCoordsNotInCenter();
+                plane.position.x = x;
+                plane.position.y = y;
+                plane.rotation.y = Math.PI;
+            } else {
+                const randomOffset = () => Math.random() * 2 - 1;
+                switch(wall) {
+                    case 0:
+                        plane.position.x = 7.4+ randomOffset();
+                        plane.position.y = Math.random() * 12 - 6 ;
+                        plane.rotation.y = Math.PI/2;
+                        break;
+                    case 1:
+                        plane.position.x = -7.4 + randomOffset();
+                        plane.position.y = Math.random() * 12 - 6 ;
+                        plane.rotation.y = -Math.PI/2;
+                        break;
+                    case 2:
+                        plane.position.x = Math.random() * 12 - 6;
+                        plane.position.y = 7.4 + randomOffset();
+                        plane.rotation.x = -Math.PI/2;
+                        plane.rotation.y = Math.PI;
+                        break;
+                    case 3:
+                        plane.position.x = Math.random() * 12 - 6;
+                        plane.position.y = -7.4 + randomOffset();
+                        plane.rotation.x = Math.PI/2;
+                        plane.rotation.y = Math.PI;
+                        break;
+                }
             }
-            
+
+
             messageObjects.push({
-                mesh: mesh,
-                speed: window.speed * (0.08 + Math.random() * 0.12),
-                createdAt: performance.now(),
-                special: wall === -1
+                mesh: plane,
+                textureObj: textureObj,
+                speed: wall===-1 ? 0.5 * (0.08 + Math.random() * 0.12) : 0.05 + Math.random() * 0.005,
+                special: wall === -1,
+                arbitraryOrder: Math.round(Math.random() * 1000)
             });
         }
 
+        // WebSocket connection
         const ws = new WebSocket('wss://bsky-relay.c.theo.io/subscribe?wantedCollections=app.bsky.feed.post');
-        
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.commit && data.commit.record && data.commit.record.text) {
@@ -364,98 +341,49 @@ https://github.com/theosanderson/firehose
             }
         };
 
-        // Mouse event handlers remain the same
-        renderer.domElement.addEventListener('mousedown', onMouseDown);
-        renderer.domElement.addEventListener('mousemove', onMouseMove);
-        renderer.domElement.addEventListener('mouseup', onMouseUp);
-        renderer.domElement.addEventListener('mouseleave', onMouseUp);
+        let lastFrameTime = Date.now();
+let cameraRotation =0;
+let camDir = 1;
 
-        function onMouseDown(event) {
-            isDragging = true;
-            previousMousePosition = {
-                x: event.clientX,
-                y: event.clientY
-            };
+
+engine.runRenderLoop(function() {
+    // Calculate delta time in seconds
+    const currentTime = Date.now();
+    const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
+    lastFrameTime = currentTime;
+
+    cameraRotation += deltaTime * 0.02 * camDir;
+    if (cameraRotation > 0.2*Math.PI/2) {
+        
+        camDir = -1;
+    } else if (cameraRotation < 0.2*-Math.PI/2) {
+        
+        camDir = 1;
+    }
+    // roll camera
+    camera.rotation.z = cameraRotation;
+
+    // Update message positions
+    for (let i = messageObjects.length - 1; i >= 0; i--) {
+        const message = messageObjects[i];
+        
+        // Apply movement based on delta time
+        message.mesh.position.z += 100 * message.speed * deltaTime;
+        message.mesh.renderOrder = message.special ? message.mesh.position.z + 10000 : message.arbitraryOrder;
+
+        if (message.mesh.position.z > 10) {
+            message.mesh.dispose();
+            texturePool.release(message.textureObj);
+            messageObjects.splice(i, 1);
         }
+    }
+    scene.render();
+});
 
-        function onMouseMove(event) {
-            if (!isDragging) return;
-
-            const deltaMove = {
-                x: event.clientX - previousMousePosition.x,
-                y: event.clientY - previousMousePosition.y
-            };
-
-            const newRotationY = camera.rotation.y + deltaMove.x * mouseSensitivity;
-            const newRotationX = camera.rotation.x + deltaMove.y * mouseSensitivity;
-
-            camera.rotation.y = THREE.MathUtils.clamp(newRotationY, -maxRotation, maxRotation);
-            camera.rotation.x = THREE.MathUtils.clamp(newRotationX, -0.1 - maxRotation, -0.1 + maxRotation);
-
-            previousMousePosition = {
-                x: event.clientX,
-                y: event.clientY
-            };
-        }
-
-        function onMouseUp() {
-            isDragging = false;
-        }
-
-        function animate(currentTime) {
-            requestAnimationFrame(animate);
-
-            const deltaTime = lastTime === 0 ? 0 : (currentTime - lastTime) / 16.667;
-            lastTime = currentTime;
-
-            for (let i = messageObjects.length - 1; i >= 0; i--) {
-                const message = messageObjects[i];
-                message.mesh.position.z += message.speed * deltaTime;
-
-                if (message?.mesh?.position?.z > 10) {
-                    const targetScene = message.special ? specialScene : regularScene;
-                    if (targetScene && message.mesh && targetScene.children.includes(message.mesh)) {
-                        targetScene.remove(message.mesh);
-                    }
-                    
-                    // Return texture to pool
-                    if (message.mesh.userData.textureObj) {
-                        texturePool.release(message.mesh.userData.textureObj);
-                    }
-                    
-                    if (message.mesh?.geometry) {
-                        message.mesh.geometry.dispose();
-                        message.mesh.geometry = null;
-                    }
-                    
-                    if (message.mesh?.material) {
-                        message.mesh.material.dispose();
-                        message.mesh.material = null;
-                    }
-                    
-                    messageObjects.splice(i, 1);
-                    
-                    if (message.mesh) {
-                        message.mesh = null;
-                    }
-                }
-            }
-
-            renderer.clear();
-            renderer.render(regularScene, camera);
-            renderer.clearDepth();
-            renderer.render(specialScene, camera);
-        }
-
-        window.addEventListener('resize', onWindowResize, false);
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        animate(0);
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            engine.resize();
+        });
     </script>
 </body>
 </html>

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<!--
+https://github.com/theosanderson/firehose
+-->
+<html>
+<head>
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-NDR7D0LP60"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-NDR7D0LP60');
+    </script>
+    <title>Bluesky Firehose</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+    <meta property="og:title" content="Bluesky Firehose" />
+    <meta property="og:description" content="The bluesky firehose visualised in 3D" />
+</head>
+<body
+    style="background-color: #111; color: white; "></body>
+    <div id="temporary-loading-message" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; color: white; font-family: sans-serif;">Loading...</div>
+    <script>
+        // Texture Pool Manager
+        class TexturePool {
+    constructor(size = 50) {
+        // Create separate pools for different texture heights
+        this.shortPool = [];  // For 1-2 lines (128px height)
+        this.tallPool = [];   // For 3+ lines (256px height)
+        this.inUse = new Set();
+        this.initPools(size);
+    }
+
+    initPools(size) {
+        // Distribute the pool size
+        const shortSize = Math.floor(size * 0.7);  // 70% short textures
+        const tallSize = size - shortSize;         // 30% tall textures
+
+        // Initialize short textures (700x128)
+        for (let i = 0; i < shortSize; i++) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 700;
+            canvas.height = 128;
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            if(window.supersharp){
+                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            }
+            this.shortPool.push({
+                texture,
+                canvas,
+                context: canvas.getContext('2d'),
+                size: 'short'
+            });
+        }
+
+        // Initialize tall textures (700x256)
+        for (let i = 0; i < tallSize; i++) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 700;
+            canvas.height = 256;
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            if(window.supersharp){
+                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            }
+            this.tallPool.push({
+                texture,
+                canvas,
+                context: canvas.getContext('2d'),
+                size: 'tall'
+            });
+        }
+    }
+
+    getTextureSize(text) {
+     
+        // Handle undefined or empty text
+        if (!text) return 'short';
+        
+        // Clean the text and handle special characters
+        const cleanText = text.toString().trim();
+        if (cleanText.length === 0) return 'short';
+
+        // Use tall texture for longer text or special characters
+        const hasEmojis = /[\u{1F300}-\u{1F9FF}]/u.test(cleanText);
+        const hasSpecialChars = /[🔥\u{1F525}]/u.test(cleanText);
+        
+        if ( cleanText.length > 120) {
+            return 'tall';
+        }
+        
+        return 'short';
+    }
+
+    acquire(text) {
+        const size = this.getTextureSize(text);
+        const pool = size === 'short' ? this.shortPool : this.tallPool;
+
+        // Try to get an available texture from the appropriate pool
+        const textureObj = pool.find(obj => !this.inUse.has(obj));
+        if (textureObj) {
+            this.inUse.add(textureObj);
+            textureObj.context.clearRect(0, 0, textureObj.canvas.width, textureObj.canvas.height);
+            return textureObj;
+        }
+
+        // Fallback to any available texture
+        const anyAvailable = [...this.shortPool, ...this.tallPool]
+            .find(obj => !this.inUse.has(obj));
+        if (anyAvailable) {
+            this.inUse.add(anyAvailable);
+            anyAvailable.context.clearRect(0, 0, anyAvailable.canvas.width, anyAvailable.canvas.height);
+            return anyAvailable;
+        }
+
+        // Create new texture if none available
+        //console.warn(`${size} texture pool exhausted, creating new texture`);
+        const height = size === 'short' ? 128 : 256;
+        
+        const newCanvas = document.createElement('canvas');
+        newCanvas.width = 700;
+        newCanvas.height = height;
+        const newTexture = new THREE.CanvasTexture(newCanvas);
+        newTexture.needsUpdate = true;
+        if(window.supersharp){
+            newTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        }
+        
+        const newObj = {
+            texture: newTexture,
+            canvas: newCanvas,
+            context: newCanvas.getContext('2d'),
+            size: size
+        };
+        pool.push(newObj);
+        this.inUse.add(newObj);
+        return newObj;
+    }
+
+    release(textureObj) {
+        if (textureObj) {
+            this.inUse.delete(textureObj);
+        }
+    }
+}
+
+        const urlParams = new URLSearchParams(window.location.search);
+        window.discardFrac = urlParams.get('discardFrac');
+        window.discardFrac = window.discardFrac ? parseFloat(window.discardFrac) : 0.0;
+        window.speed = urlParams.get('speed');
+        window.speed = window.speed ? parseFloat(window.speed) : 0.5;
+        window.supersharp = urlParams.get('supersharp');
+
+        const texturePool = new TexturePool();
+        let rotationDir = 1;
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        scene.fog = new THREE.Fog(0x000000, 35, 40);
+
+        const camera = new THREE.PerspectiveCamera(110, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.autoClear = false;
+        renderer.sortObjects = false;
+        document.body.appendChild(renderer.domElement);
+
+        // Mouse control variables
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        const maxRotation = THREE.MathUtils.degToRad(15);
+        const mouseSensitivity = 0.00003;
+
+        const regularScene = new THREE.Scene();
+        regularScene.background = new THREE.Color(0x000000);
+        regularScene.fog = new THREE.Fog(0x000000, 35, 40);
+
+        const specialScene = new THREE.Scene();
+        specialScene.fog = new THREE.Fog(0x000000, 35, 40);
+
+        const tunnelLength = 40;
+        const tunnelGeometry = new THREE.BoxGeometry(15, 15, tunnelLength);
+        const tunnelMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x111111, 
+            side: THREE.BackSide 
+        });
+        const tunnel = new THREE.Mesh(tunnelGeometry, tunnelMaterial);
+      
+        camera.position.z = 8;
+        camera.position.y = 1;
+        camera.rotation.x = -0.1;
+
+        const messageObjects = [];
+        let lastTime = 0;
+
+        function wrapText(context, text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = words[0];
+
+            for (let i = 1; i < words.length; i++) {
+                const word = words[i];
+                const width = context.measureText(currentLine + " " + word).width;
+                if (width < maxWidth) {
+                    currentLine += " " + word;
+                } else {
+                    lines.push(currentLine);
+                    currentLine = word;
+                }
+            }
+            lines.push(currentLine);
+            return lines;
+        }
+
+        function updateTextTexture(textureObj, text, specialColor) {
+            const { context, texture } = textureObj;
+            const canvas = textureObj.canvas;
+            
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const fontSize = 32;
+            context.font = `bold ${fontSize}px sans-serif`;
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+
+            const maxWidth = 650;
+            const lines = wrapText(context, text, maxWidth);
+            const lineHeight = fontSize * 1.1;
+            const totalHeight = lines.length * lineHeight;
+            const startY = (canvas.height - totalHeight) / 2;
+
+            let r = Math.floor(Math.random() * 200 + 55);
+            let g = Math.floor(Math.random() * 200 + 55);
+            let b = Math.floor(Math.random() * 200 + 55);
+
+            if (specialColor) {
+                r = Math.floor(Math.random() * 100 + 155);
+                g = Math.floor(Math.random() * 100 + 155);
+                b = Math.floor(Math.random() * 100 + 155);
+            }
+            const fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
+
+            lines.forEach((line, index) => {
+                const y = startY + (index * lineHeight) + lineHeight/2;
+                
+                context.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                context.shadowBlur = 15;
+                context.shadowOffsetX = 0;
+                context.shadowOffsetY = 0;
+                
+                context.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                context.lineWidth = 6;
+                context.strokeText(line, canvas.width/2, y);
+                
+                context.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                context.fillText(line, canvas.width/2, y);
+                
+                context.fillStyle = fillStyle;
+                context.fillText(line, canvas.width/2, y);
+            });
+            
+            texture.needsUpdate = true;
+            return { 
+                textureObj,
+                lineCount: lines.length
+            };
+        }
+
+        function createMessage(text) {
+            let wall = Math.floor(Math.random() * 4.03);
+            if (text.includes('🔥') || wall > 3) {
+                wall = -1;
+            }
+            document.getElementById('temporary-loading-message').style.display = 'none';
+
+            const textureObj = texturePool.acquire(text);
+            const { lineCount } = updateTextTexture(textureObj, text, wall === -1);
+            
+            const height = Math.max(1.5, lineCount * 0.75);
+            const geometry = new THREE.PlaneGeometry(7, height);
+            
+            const randomOffset = Math.random() * 0.5;
+
+            if(wall !== -1 && window.discardFrac && Math.random() < window.discardFrac) {
+                texturePool.release(textureObj);
+                return;
+            }
+
+            const material = new THREE.MeshBasicMaterial({ 
+                map: textureObj.texture,
+                transparent: true,
+                opacity: 1,
+                depthWrite: false,
+                depthTest: wall === -1 ? false : true,
+                side: THREE.FrontSide
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.z = -tunnelLength + randomOffset;
+            mesh.userData.textureObj = textureObj;
+
+            switch(wall) {
+                case -1:
+                    const centerExtent = 10;
+                    const centerExtentX = 7;
+                    const getCoordsNotInCenter = () => {
+                        const x = (Math.random()) * centerExtentX - centerExtentX/2;
+                        const y = (Math.random()) * centerExtent - centerExtent/2;
+                        if (Math.sqrt(x*x + y*y) < 2) {
+                            return getCoordsNotInCenter();
+                        }
+                        return { x, y };
+                    };
+                    const { x, y } = getCoordsNotInCenter();
+                    mesh.position.x = x;
+                    mesh.position.y = y;
+                    mesh.special = true;
+                    mesh.renderOrder = Infinity;
+                    specialScene.add(mesh);
+                    break;
+                default:
+                    switch(wall) {
+                        case 0:
+                            mesh.position.x = 7.4;
+                            mesh.position.y = Math.random() * 12 - 6;
+                            mesh.rotation.y = -Math.PI/2;
+                            break;
+                        case 1:
+                            mesh.position.x = -7.4;
+                            mesh.position.y = Math.random() * 12 - 6;
+                            mesh.rotation.y = Math.PI/2;
+                            break;
+                        case 2:
+                            mesh.position.x = Math.random() * 12 - 6;
+                            mesh.position.y = 7.4;
+                            mesh.rotation.x = Math.PI/2;
+                            break;
+                        case 3:
+                            mesh.position.x = Math.random() * 12 - 6;
+                            mesh.position.y = -7.4;
+                            mesh.rotation.x = -Math.PI/2;
+                            break;
+                    }
+                    regularScene.add(mesh);
+            }
+            
+            messageObjects.push({
+                mesh: mesh,
+                speed: window.speed * (0.08 + Math.random() * 0.12),
+                createdAt: performance.now(),
+                special: wall === -1
+            });
+        }
+
+        const ws = new WebSocket('wss://bsky-relay.c.theo.io/subscribe?wantedCollections=app.bsky.feed.post');
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.commit && data.commit.record && data.commit.record.text) {
+                createMessage(data.commit.record.text);
+            }
+        };
+
+        // Mouse event handlers remain the same
+        renderer.domElement.addEventListener('mousedown', onMouseDown);
+        renderer.domElement.addEventListener('mousemove', onMouseMove);
+        renderer.domElement.addEventListener('mouseup', onMouseUp);
+        renderer.domElement.addEventListener('mouseleave', onMouseUp);
+
+        function onMouseDown(event) {
+            isDragging = true;
+            previousMousePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+        }
+
+        function onMouseMove(event) {
+            if (!isDragging) return;
+
+            const deltaMove = {
+                x: event.clientX - previousMousePosition.x,
+                y: event.clientY - previousMousePosition.y
+            };
+
+            const newRotationY = camera.rotation.y + deltaMove.x * mouseSensitivity;
+            const newRotationX = camera.rotation.x + deltaMove.y * mouseSensitivity;
+
+            camera.rotation.y = THREE.MathUtils.clamp(newRotationY, -maxRotation, maxRotation);
+            camera.rotation.x = THREE.MathUtils.clamp(newRotationX, -0.1 - maxRotation, -0.1 + maxRotation);
+
+            previousMousePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+        }
+
+        function animate(currentTime) {
+            requestAnimationFrame(animate);
+
+            const deltaTime = lastTime === 0 ? 0 : (currentTime - lastTime) / 16.667;
+            lastTime = currentTime;
+
+            for (let i = messageObjects.length - 1; i >= 0; i--) {
+                const message = messageObjects[i];
+                message.mesh.position.z += message.speed * deltaTime;
+
+                if (message?.mesh?.position?.z > 10) {
+                    const targetScene = message.special ? specialScene : regularScene;
+                    if (targetScene && message.mesh && targetScene.children.includes(message.mesh)) {
+                        targetScene.remove(message.mesh);
+                    }
+                    
+                    // Return texture to pool
+                    if (message.mesh.userData.textureObj) {
+                        texturePool.release(message.mesh.userData.textureObj);
+                    }
+                    
+                    if (message.mesh?.geometry) {
+                        message.mesh.geometry.dispose();
+                        message.mesh.geometry = null;
+                    }
+                    
+                    if (message.mesh?.material) {
+                        message.mesh.material.dispose();
+                        message.mesh.material = null;
+                    }
+                    
+                    messageObjects.splice(i, 1);
+                    
+                    if (message.mesh) {
+                        message.mesh = null;
+                    }
+                }
+            }
+
+            renderer.clear();
+            renderer.render(regularScene, camera);
+            renderer.clearDepth();
+            renderer.render(specialScene, camera);
+        }
+
+        window.addEventListener('resize', onWindowResize, false);
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        animate(0);
+    </script>
+</body>
+</html>
