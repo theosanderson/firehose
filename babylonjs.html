@@ -26,6 +26,13 @@
     <div id="temporary-loading-message">Loading...</div>
     
     <script>
+
+const urlParams = new URLSearchParams(window.location.search);
+        window.discardFrac = urlParams.get('discardFrac');
+        window.discardFrac = window.discardFrac ? parseFloat(window.discardFrac) : 0.0;
+        window.speed = urlParams.get('speed');
+        window.speed = window.speed ? parseFloat(window.speed) : 0.5;
+
         // TexturePool class for managing dynamic textures
         class TexturePool {
             constructor(scene, size = 50) {
@@ -233,6 +240,12 @@
 
         function createMessage(text) {
             let wall = Math.floor(Math.random() * 4.05);
+
+            if(wall !== -1 && window.discardFrac && Math.random() < window.discardFrac) {
+              
+                return;
+            }
+
             if (text.includes('🔥') || wall > 3) {
                 wall = -1;
             }
