@@ -1,0 +1,14 @@
+{
+  "name": "bluesky-viz-webpack",
+  "version": "1.0.0",
+  "description": "Bluesky Firehose Visualization using Babylon.js",
+  "main": "dist/bundle.js",
+  "scripts": {
+    "start": "webpack serve --open",
+    "build": "webpack --mode production",
+    "dev": "webpack serve"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

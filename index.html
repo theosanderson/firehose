@@ -248,7 +248,7 @@ const urlParams = new URLSearchParams(window.location.search);
                 return;
             }
 
-            if (text.includes('🔥') || wall > 3) {
+            if (wall > 3) {
                 wall = -1;
             }
             document.getElementById('temporary-loading-message').style.display = 'none';
