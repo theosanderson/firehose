@@ -66,11 +66,13 @@ class BlueSkyViz {
         this.scene = new Scene(this.engine);
         this.textWrapper = new TextWrapper();
         this.setupScene();
+         this.camera = new UniversalCamera("camera", new Vector3(0, 0, 0), this.scene);
         this.setupCamera();
         this.texturePool = new TexturePool(this.scene, lineHeight);
         this.connectWebSocket();
         this.startRenderLoop();
         this.handleResize();
+       
     }
 
     private setupScene(): void {
@@ -92,7 +94,7 @@ class BlueSkyViz {
     }
 
     private setupCamera(): void {
-        this.camera = new UniversalCamera("camera", new Vector3(0, 0, 0), this.scene);
+       
         this.camera.rotation.y = Math.PI;
         this.camera.rotation.x = 0.15;
         this.camera.fov = 1.85;
@@ -314,12 +316,3 @@ class BlueSkyViz {
 window.addEventListener('DOMContentLoaded', () => {
     new BlueSkyViz();
 });
-
-// Type definitions
-export interface MessageObject {
-    mesh: any;
-    textureObj: any;
-    speed: number;
-    special: boolean;
-    arbitraryOrder: number;
-}

@@ -8,7 +8,7 @@ export interface MessageObject {
 
 export interface TextureObject {
     texture: any;
-    size: 'short' | 'tall';
+    lines: number;
 }
 
 export interface TextureUpdateResult {
