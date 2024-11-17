@@ -171,7 +171,11 @@ class BlueSkyViz {
         }
 
         // Wrap text before acquiring texture
-        const lines = this.textWrapper.wrapText(text, 650);
+        let lines = this.textWrapper.wrapText(text, 650);
+        if (lines.length > 10) {
+            lines = lines.slice(0, 10);
+        }
+        
         const textureObj = this.texturePool.acquire(lines.length);
         const { lineCount } = this.updateTextTexture(textureObj, lines, wall === -1);
         
