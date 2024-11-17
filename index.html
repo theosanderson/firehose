@@ -352,11 +352,11 @@ engine.runRenderLoop(function() {
     const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
     lastFrameTime = currentTime;
 
-    cameraRotation += deltaTime * 0.02 * camDir;
-    if (cameraRotation > 0.2*Math.PI/2) {
+    cameraRotation += deltaTime * 0.015 * camDir;
+    if (cameraRotation > 0.18*Math.PI/2) {
         
         camDir = -1;
-    } else if (cameraRotation < 0.2*-Math.PI/2) {
+    } else if (cameraRotation < 0.18*-Math.PI/2) {
         
         camDir = 1;
     }
