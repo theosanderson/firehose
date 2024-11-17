@@ -117,9 +117,15 @@
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
+        // Add exponential fog
+        scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+        scene.fogDensity = 0.015;
+        scene.fogColor = new BABYLON.Color3(0, 0, 0);
+
         // Camera setup point left
         const camera = new BABYLON.ArcRotateCamera("camera", Math.PI/2, Math.PI/2, 10, new BABYLON.Vector3(0, 0, 0), scene);
-        
+        camera.fov = 1.5;
+        camera.maxZ= 50;
         // Add camera controls
         const maxRotation = BABYLON.Tools.ToRadians(15);
         let isDragging = false;
@@ -215,15 +221,25 @@
             lines.forEach((line, index) => {
                 const y = startY + (index * lineHeight) + lineHeight/2;
                 
-                // Add glow effect
-                context.shadowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
+                // Shadow
+               
+                context.shadowColor = 'rgba(0, 0, 0, 0.8)';
                 context.shadowBlur = 15;
                 context.shadowOffsetX = 0;
                 context.shadowOffsetY = 0;
                 
+                
+                // Stroke black
+                context.strokeStyle = 'rgba(0, 0, 0, 0.9)';
+                context.lineWidth = 6;
+                context.strokeText(line, texture.getSize().width/2, y);
+
+
                 // Main text
                 context.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
                 context.fillText(line, texture.getSize().width/2, y);
+
+                
             });
             
             texture.update(true); // Force update with alpha
@@ -234,7 +250,7 @@
         }
 
         function createMessage(text) {
-            let wall = Math.floor(Math.random() * 4.13);
+            let wall = Math.floor(Math.random() * 4.05);
             if (text.includes('🔥') || wall > 3) {
                 wall = -1;
             }
@@ -250,6 +266,7 @@
             }, scene);
 
             const material = new BABYLON.StandardMaterial("messageMat", scene);
+            material.depthBias = Math.round(Math.random() * 10);
             material.diffuseTexture = textureObj.texture;
             material.specularColor = new BABYLON.Color3(0, 0, 0);
             material.emissiveColor = new BABYLON.Color3(1, 1, 1);
@@ -279,27 +296,31 @@
                 const { x, y } = getCoordsNotInCenter();
                 plane.position.x = x;
                 plane.position.y = y;
+                plane.rotation.y = Math.PI;
             } else {
+                const randomOffset = () => Math.random() * 2 - 1;
                 switch(wall) {
                     case 0:
-                        plane.position.x = 7.4;
-                        plane.position.y = Math.random() * 12 - 6;
-                        plane.rotation.y = -Math.PI/2;
+                        plane.position.x = 7.4+ randomOffset();
+                        plane.position.y = Math.random() * 12 - 6 ;
+                        plane.rotation.y = Math.PI/2;
                         break;
                     case 1:
-                        plane.position.x = -7.4;
-                        plane.position.y = Math.random() * 12 - 6;
-                        plane.rotation.y = Math.PI/2;
+                        plane.position.x = -7.4 + randomOffset();
+                        plane.position.y = Math.random() * 12 - 6 ;
+                        plane.rotation.y = -Math.PI/2;
                         break;
                     case 2:
                         plane.position.x = Math.random() * 12 - 6;
-                        plane.position.y = 7.4;
-                        plane.rotation.x = Math.PI/2;
+                        plane.position.y = 7.4 + randomOffset();
+                        plane.rotation.x = -Math.PI/2;
+                        plane.rotation.y = Math.PI;
                         break;
                     case 3:
                         plane.position.x = Math.random() * 12 - 6;
-                        plane.position.y = -7.4;
-                        plane.rotation.x = -Math.PI/2;
+                        plane.position.y = -7.4 + randomOffset();
+                        plane.rotation.x = Math.PI/2;
+                        plane.rotation.y = Math.PI;
                         break;
                 }
             }
@@ -307,7 +328,7 @@
             messageObjects.push({
                 mesh: plane,
                 textureObj: textureObj,
-                speed: 0.5 * (0.08 + Math.random() * 0.12),
+                speed: wall===-1 ? 0.5 * (0.08 + Math.random() * 0.12) : 0.05 + Math.random() * 0.03,
                 special: wall === -1
             });
         }
