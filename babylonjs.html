@@ -115,15 +115,28 @@
         const canvas = document.getElementById("renderCanvas");
         const engine = new BABYLON.Engine(canvas, true);
         const scene = new BABYLON.Scene(engine);
+        scene.setRenderingOrder(0, null, null, (a, b) => {
+    // Get the meshes
+    const meshA = a.getMesh();
+    const meshB = b.getMesh();
+    return meshA.renderOrder - meshB.renderOrder;
+});
         scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
 
-        // Add exponential fog
-        scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
-        scene.fogDensity = 0.015;
+        // Add linear fog
+        scene.fogMode = BABYLON.Scene.FOGMODE_LINEAR;
+       
         scene.fogColor = new BABYLON.Color3(0, 0, 0);
+        scene.fogStart = 35
+        scene.fogEnd = 40
+
 
         // Camera setup point left
-        const camera = new BABYLON.ArcRotateCamera("camera", Math.PI/2, Math.PI/2, 10, new BABYLON.Vector3(0, 0, 0), scene);
+        const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 0, 0), scene);
+        // rotate 180 degrees
+        camera.rotation.y = Math.PI;
+        camera.rotation.x = 0.15;
+
         camera.fov = 1.5;
         camera.maxZ= 50;
         // Add camera controls
@@ -132,37 +145,6 @@
         let previousMousePosition = { x: 0, y: 0 };
         const mouseSensitivity = 0.003;
 
-        scene.onPointerDown = function(evt) {
-            isDragging = true;
-            previousMousePosition = {
-                x: evt.clientX,
-                y: evt.clientY
-            };
-        };
-
-        scene.onPointerMove = function(evt) {
-            if (!isDragging) return;
-
-            const deltaMove = {
-                x: evt.clientX - previousMousePosition.x,
-                y: evt.clientY - previousMousePosition.y
-            };
-
-            const newRotationY = camera.rotation.y + deltaMove.x * mouseSensitivity;
-            const newRotationX = camera.rotation.x + deltaMove.y * mouseSensitivity;
-
-            camera.rotation.y = BABYLON.Scalar.Clamp(newRotationY, -maxRotation, maxRotation);
-            camera.rotation.x = BABYLON.Scalar.Clamp(newRotationX, -0.1 - maxRotation, -0.1 + maxRotation);
-
-            previousMousePosition = {
-                x: evt.clientX,
-                y: evt.clientY
-            };
-        };
-
-        scene.onPointerUp = function() {
-            isDragging = false;
-        };
 
         // Create tunnel
         const tunnelLength = 40;
@@ -279,7 +261,7 @@
             
             plane.material = material;
 
-            const randomOffset = Math.random() * 0.5;
+            const randomOffset = Math.random() * 0;
             plane.position.z = -tunnelLength + randomOffset;
 
             if (wall === -1) {
@@ -325,11 +307,13 @@
                 }
             }
 
+
             messageObjects.push({
                 mesh: plane,
                 textureObj: textureObj,
                 speed: wall===-1 ? 0.5 * (0.08 + Math.random() * 0.12) : 0.05 + Math.random() * 0.03,
-                special: wall === -1
+                special: wall === -1,
+                arbitraryOrder: Math.round(Math.random() * 1000)
             });
         }
 
@@ -342,20 +326,44 @@
             }
         };
 
-        // Animation loop
-        engine.runRenderLoop(function() {
-            for (let i = messageObjects.length - 1; i >= 0; i--) {
-                const message = messageObjects[i];
-                message.mesh.position.z += message.speed;
+        let lastFrameTime = Date.now();
+let cameraRotation =0;
+let camDir = 1;
 
-                if (message.mesh.position.z > 10) {
-                    message.mesh.dispose();
-                    texturePool.release(message.textureObj);
-                    messageObjects.splice(i, 1);
-                }
-            }
-            scene.render();
-        });
+
+engine.runRenderLoop(function() {
+    // Calculate delta time in seconds
+    const currentTime = Date.now();
+    const deltaTime = (currentTime - lastFrameTime) / 1000; // Convert to seconds
+    lastFrameTime = currentTime;
+
+    cameraRotation += deltaTime * 0.02 * camDir;
+    if (cameraRotation > 0.2*Math.PI/2) {
+        
+        camDir = -1;
+    } else if (cameraRotation < 0.2*-Math.PI/2) {
+        
+        camDir = 1;
+    }
+    // roll camera
+    camera.rotation.z = cameraRotation;
+
+    // Update message positions
+    for (let i = messageObjects.length - 1; i >= 0; i--) {
+        const message = messageObjects[i];
+        
+        // Apply movement based on delta time
+        message.mesh.position.z += 100 * message.speed * deltaTime;
+        message.mesh.renderOrder = message.special ? message.mesh.position.z + 10000 : message.arbitraryOrder;
+
+        if (message.mesh.position.z > 10) {
+            message.mesh.dispose();
+            texturePool.release(message.textureObj);
+            messageObjects.splice(i, 1);
+        }
+    }
+    scene.render();
+});
 
         // Handle window resize
         window.addEventListener('resize', function() {
