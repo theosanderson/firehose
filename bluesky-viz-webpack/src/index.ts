@@ -1,3 +1,7 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
+import BlueSkyVizComponent from './BlueSkyVizComponent';
+
 import {
     Engine,
     Scene,
@@ -314,5 +318,5 @@ class BlueSkyViz {
 
 // Initialize the visualization when the DOM is loaded
 window.addEventListener('DOMContentLoaded', () => {
-    new BlueSkyViz();
+    ReactDOM.render(<BlueSkyVizComponent />, document.getElementById('root'));
 });
