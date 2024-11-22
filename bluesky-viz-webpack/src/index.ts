@@ -279,9 +279,9 @@ class BlueSkyViz {
 
     private updateCamera(deltaTime: number): void {
         this.cameraRotation += deltaTime * 0.015 * this.camDir;
-        if (this.cameraRotation > 0.18 * Math.PI/2) {
+        if (this.cameraRotation > 0.14 * Math.PI/2) {
             this.camDir = -1;
-        } else if (this.cameraRotation < 0.18 * -Math.PI/2) {
+        } else if (this.cameraRotation < 0.14 * -Math.PI/2) {
             this.camDir = 1;
         }
         this.camera.rotation.z = this.cameraRotation;
