@@ -336,7 +336,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             material.transparencyMode = Material.MATERIAL_ALPHABLEND;
             
             plane.material = material;
-            plane.position = new Vector3(0, 0, -20);
+            plane.position = new Vector3(0, 0, 5);
             plane.rotation.y = Math.PI;
 
             connectingMessageRef.current = {
