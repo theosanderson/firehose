@@ -18,7 +18,7 @@ export class TexturePool {
         scene: Scene, 
         lineHeight: number,
         width: number = 700,
-        initialPoolSize: number = 20
+        initialPoolSize: number = 1
     ) {
         this.scene = scene;
         this.lineHeight = lineHeight;
