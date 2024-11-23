@@ -284,7 +284,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         lastFrameTimeRef.current = currentTime;
 
         // Update audio data at specified interval
-        if (analyserRef.current && audioDataRef.current) {
+        if (settingsRef.current.audioEnabled && analyserRef.current && audioDataRef.current) {
             const now = Date.now();
             if (now - lastAudioUpdateRef.current >= AUDIO_UPDATE_INTERVAL) {
                 analyserRef.current.getByteFrequencyData(audioDataRef.current);
@@ -294,8 +294,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 // Map 0-255 to 0.1-3.0 for audio multiplier
                 settingsRef.current.audioMultiplier = 0.1 + (avg / 255) * 2.9;
                 lastAudioUpdateRef.current = now;
-                console.log("audioDataRef.current",audioDataRef.current)
             }
+        } else {
+            settingsRef.current.audioMultiplier = 1.0;
         }
 
         // Update camera
@@ -413,27 +414,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         };
 
-        // Setup audio analyzer
-        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-            .then(stream => {
-                const audioContext = new AudioContext();
-                const source = audioContext.createMediaStreamSource(stream);
-                const webAudioAnalyser = audioContext.createAnalyser();
-                webAudioAnalyser.fftSize = 32;
-                webAudioAnalyser.smoothingTimeConstant = 0.9;
-                source.connect(webAudioAnalyser);
-                
-                analyserRef.current = webAudioAnalyser;
-                audioDataRef.current = new Uint8Array(webAudioAnalyser.frequencyBinCount);
-                
-                // Start render loop after audio setup
-                animationFrameRef.current = requestAnimationFrame(updateScene);
-            })
-            .catch(err => {
-                console.error("Error accessing microphone:", err);
-                // Start render loop anyway if mic access fails
-                animationFrameRef.current = requestAnimationFrame(updateScene);
-            });
+        // Start render loop
+        animationFrameRef.current = requestAnimationFrame(updateScene);
 
         // Handle resize
         const handleResize = () => {
@@ -460,13 +442,15 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         discardFraction: discardFraction,
         baseSpeed: 1.0,
         audioMultiplier: 1.0,
-        specialFrequency: 0.04
+        specialFrequency: 0.04,
+        audioEnabled: false
     });
     const settingsRef = useRef<Settings>({
         discardFraction: discardFraction,
         baseSpeed: 1.0,
         audioMultiplier: 1.0,
-        specialFrequency: 0.04
+        specialFrequency: 0.04,
+        audioEnabled: false
     });
     const analyserRef = useRef<Analyser | null>(null);
     const audioDataRef = useRef<Uint8Array | null>(null);
@@ -648,6 +632,48 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 style={{ width: '100%' }}
                             />
                             <span style={{ color: 'white' }}>{settings.baseSpeed.toFixed(1)}x</span>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
+                                Enable Audio Reactivity:
+                            </label>
+                            <input
+                                type="checkbox"
+                                checked={settings.audioEnabled}
+                                onChange={(e) => {
+                                    const newValue = e.target.checked;
+                                    setSettings(prev => ({
+                                        ...prev,
+                                        audioEnabled: newValue
+                                    }));
+                                    settingsRef.current.audioEnabled = newValue;
+                                    
+                                    if (newValue && !analyserRef.current) {
+                                        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                                            .then(stream => {
+                                                const audioContext = new AudioContext();
+                                                const source = audioContext.createMediaStreamSource(stream);
+                                                const webAudioAnalyser = audioContext.createAnalyser();
+                                                webAudioAnalyser.fftSize = 32;
+                                                webAudioAnalyser.smoothingTimeConstant = 0.9;
+                                                source.connect(webAudioAnalyser);
+                                                
+                                                analyserRef.current = webAudioAnalyser;
+                                                audioDataRef.current = new Uint8Array(webAudioAnalyser.frequencyBinCount);
+                                            })
+                                            .catch(err => {
+                                                console.error("Error accessing microphone:", err);
+                                                setSettings(prev => ({
+                                                    ...prev,
+                                                    audioEnabled: false
+                                                }));
+                                                settingsRef.current.audioEnabled = false;
+                                            });
+                                    }
+                                }}
+                                style={{ marginRight: '8px' }}
+                            />
+                            <span style={{ color: 'white' }}>Audio Reactive</span>
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
