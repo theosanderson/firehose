@@ -394,6 +394,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         discardFraction: discardFraction,
         globalSpeed: 1.0
     });
+    console.log(settings);
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
 
     const handleMouseMove = () => {
