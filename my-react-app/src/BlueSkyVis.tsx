@@ -57,6 +57,22 @@ interface Settings {
     globalSpeed: number;
 }
 
+// Add styles to head
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+    .control-button {
+        transition: opacity 0.3s ease-in-out;
+        cursor: pointer;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        padding: 8px;
+    }
+    .control-button:hover {
+        opacity: 1 !important;
+    }
+`;
+document.head.appendChild(styleSheet);
+
 const BlueSkyViz: React.FC<BlueSkyVizProps> = ({ 
     websocketUrl = 'wss://bsky-relay.c.theo.io/subscribe?wantedCollections=app.bsky.feed.post',
     discardFraction = new URLSearchParams(window.location.search).get('discardFrac') ? 
@@ -442,6 +458,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         backgroundColor: 'rgba(0, 0, 0, 0.5)',
                         borderRadius: '50%',
                         padding: '8px',
+                        ':hover': {
+                            opacity: '1'
+                        }
                     }}
                     onClick={() => {
                         if (document.fullscreenElement) {
@@ -466,13 +485,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 </div>
                 
                 <div
+                    className="control-button"
                     style={{
                         opacity: isMouseActive ? .7 : 0,
-                        transition: 'opacity 0.3s ease-in-out',
-                        cursor: 'pointer',
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        borderRadius: '50%',
-                        padding: '8px',
                     }}
                     onClick={() => setShowSettings(true)}
                 >
@@ -491,13 +506,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                     </svg>
                 </div>
                 <div
+                    className="control-button"
                     style={{
                         opacity: isMouseActive ? .7 : 0,
-                        transition: 'opacity 0.3s ease-in-out',
-                        cursor: 'pointer',
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        borderRadius: '50%',
-                        padding: '8px',
                     }}
                     onClick={() => {
                         const win = window.open('https://bsky.app/profile/theo.io/post/3lb3uzxotxs2w', '_blank');
