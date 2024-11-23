@@ -156,8 +156,9 @@ class BlueSkyViz {
     }
 
     private createMessage(text: string): void {
-        let wall = Math.floor(Math.random() * 4.04);
-        const discardFrac = parseFloat(new URLSearchParams(window.location.search).get('discardFrac') || '0');
+        const specialFreq = parseFloat(new URLSearchParams(window.location.search).get('specialFreq') || '0.04');
+        let wall = Math.floor(Math.random() * (4 + specialFreq));
+        const discardFrac = parseFloat(new URLSearchParams(window.location.search).get('discardFrac') || '0'); 
 
         if (wall !== -1 && discardFrac && Math.random() < discardFrac) {
             return;

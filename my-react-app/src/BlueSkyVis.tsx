@@ -54,6 +54,7 @@ interface BlueSkyVizProps {
 interface Settings {
     discardFraction: number;
     globalSpeed: number;
+    specialFrequency: number;
 }
 
 // Add styles to head
@@ -207,7 +208,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const createMessage = (text: string) => {
         if (!sceneRef.current || !texturePoolRef.current || !textWrapperRef.current) return;
 
-        let wall = Math.floor(Math.random() * 4.04);
+        let wall = Math.floor(Math.random() * (4 + settingsRef.current.specialFrequency));
         
         // Discard messages based on discardFraction, regardless of wall type
         if (wall > 3) {
@@ -416,7 +417,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const [showMusic, setShowMusic] = useState(false);
     const [settings, setSettings] = useState<Settings>({
         discardFraction: discardFraction,
-        globalSpeed: 1.0
+        globalSpeed: 1.0,
+        specialFrequency: 0.04
     });
     const settingsRef = useRef<Settings>({
         discardFraction: discardFraction,
@@ -598,6 +600,28 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 style={{ width: '100%' }}
                             />
                             <span style={{ color: 'white' }}>{settings.globalSpeed.toFixed(1)}x</span>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
+                                Special Post Frequency:
+                            </label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="0.2"
+                                step="0.01"
+                                value={settings.specialFrequency}
+                                onChange={(e) => {
+                                    const newValue = parseFloat(e.target.value);
+                                    setSettings(prev => ({
+                                        ...prev,
+                                        specialFrequency: newValue
+                                    }));
+                                    settingsRef.current.specialFrequency = newValue;
+                                }}
+                                style={{ width: '100%' }}
+                            />
+                            <span style={{ color: 'white' }}>{(settings.specialFrequency * 100).toFixed(1)}%</span>
                         </div>
                         {
                             showMusic?
