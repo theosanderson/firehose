@@ -280,9 +280,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         // Update camera
         cameraRotationRef.current += deltaTime * 0.015 * camDirRef.current;
-        if (cameraRotationRef.current > 0.18 * Math.PI/2) {
+        if (cameraRotationRef.current > 0.13 * Math.PI/2) {
             camDirRef.current = -1;
-        } else if (cameraRotationRef.current < 0.18 * -Math.PI/2) {
+        } else if (cameraRotationRef.current < 0.13 * -Math.PI/2) {
             camDirRef.current = 1;
         }
         cameraRef.current.rotation.z = cameraRotationRef.current;
@@ -338,7 +338,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         // Create connecting message after TexturePool is initialized
         if (textWrapperRef.current && sceneRef.current && texturePoolRef.current) {
-            const connectingText = "< CONNECTING TO LIVE BLUESKY FIREHOSE >";
+            const connectingText = "       < CONNECTING TO LIVE        BLUESKY FIREHOSE >   ";
             const lines = textWrapperRef.current.wrapText(connectingText, 650);
             const textureObj = texturePoolRef.current.acquire(lines.length);
             const { lineCount } = updateTextTexture(textureObj, lines, true);
