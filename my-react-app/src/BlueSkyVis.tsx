@@ -444,7 +444,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         specialFrequency: 0.04,
         audioEnabled: false
     });
-    const analyserRef = useRef<Analyser | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
     const audioDataRef = useRef<Uint8Array | null>(null);
     const lastAudioUpdateRef = useRef<number>(0);
     const AUDIO_UPDATE_INTERVAL = 0; // Update every 100ms
