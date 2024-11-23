@@ -207,8 +207,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
     const createMessage = (text: string) => {
         if (!sceneRef.current || !texturePoolRef.current || !textWrapperRef.current) return;
-        console.log(settingsRef.current.specialFrequency);
-
+       
         let wall = Math.floor(Math.random() * (4 + 1* settingsRef.current.specialFrequency));
         
         // Discard messages based on discardFraction, regardless of wall type
