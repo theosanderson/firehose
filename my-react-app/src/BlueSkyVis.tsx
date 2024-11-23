@@ -423,7 +423,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 source.connect(webAudioAnalyser);
                 
                 analyserRef.current = webAudioAnalyser;
-                audioDataRef.current = new Uint8Array(babylonAnalyser.FFT_SIZE);
+                audioDataRef.current = new Uint8Array(webAudioAnalyser.frequencyBinCount);
                 
                 // Start render loop after audio setup
                 animationFrameRef.current = requestAnimationFrame(updateScene);
