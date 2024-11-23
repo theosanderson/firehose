@@ -556,16 +556,16 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         <h2 style={{ color: 'white', marginTop: 0 }}>Settings</h2>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
-                                Discard Fraction (0-1):
+                                Proportion of posts to show:
                             </label>
                             <input
                                 type="range"
                                 min="0"
                                 max="1"
                                 step="0.1"
-                                value={settings.discardFraction}
+                                value={1 - settings.discardFraction}
                                 onChange={(e) => {
-                                    const newValue = parseFloat(e.target.value);
+                                    const newValue = 1 - parseFloat(e.target.value);
                                     setSettings(prev => ({
                                         ...prev,
                                         discardFraction: newValue
@@ -574,7 +574,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 }}
                                 style={{ width: '100%' }}
                             />
-                            <span style={{ color: 'white' }}>{settings.discardFraction.toFixed(1)}</span>
+                            <span style={{ color: 'white' }}>{(100 * (1 - settings.discardFraction)).toFixed(0)}%</span>
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
