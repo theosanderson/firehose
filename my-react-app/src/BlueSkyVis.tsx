@@ -8,8 +8,7 @@ import {
     UniversalCamera,
     StandardMaterial,
     MeshBuilder,
-    Material,
-    Analyser
+    Material
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
 import { MessageObject, TextureUpdateResult } from './types';
