@@ -417,15 +417,12 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             .then(stream => {
                 const audioContext = new AudioContext();
                 const source = audioContext.createMediaStreamSource(stream);
-                const babylonAnalyser = new Analyser(sceneRef.current!);
-                babylonAnalyser.FFT_SIZE = 32;
-                babylonAnalyser.SMOOTHING = 0.9;
-                
                 const webAudioAnalyser = audioContext.createAnalyser();
                 webAudioAnalyser.fftSize = 32;
+                webAudioAnalyser.smoothingTimeConstant = 0.9;
                 source.connect(webAudioAnalyser);
                 
-                analyserRef.current = babylonAnalyser;
+                analyserRef.current = webAudioAnalyser;
                 audioDataRef.current = new Uint8Array(babylonAnalyser.FFT_SIZE);
                 
                 // Start render loop after audio setup
