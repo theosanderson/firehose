@@ -52,6 +52,11 @@ interface BlueSkyVizProps {
     discardFraction?: number;
 }
 
+interface Settings {
+    discardFraction: number;
+    globalSpeed: number;
+}
+
 const BlueSkyViz: React.FC<BlueSkyVizProps> = ({ 
     websocketUrl = 'wss://bsky-relay.c.theo.io/subscribe?wantedCollections=app.bsky.feed.post',
     discardFraction = new URLSearchParams(window.location.search).get('discardFrac') ? 
@@ -267,7 +272,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Update messages
         for (let i = messageObjectsRef.current.length - 1; i >= 0; i--) {
             const message = messageObjectsRef.current[i];
-            message.mesh.position.z += 100 * message.speed * deltaTime;
+            message.mesh.position.z += 100 * message.speed * settings.globalSpeed * deltaTime;
             message.mesh.renderOrder = message.arbitraryOrder;
 
             if (message.special) {
@@ -384,6 +389,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     }, [websocketUrl]);
 
     const [isMouseActive, setIsMouseActive] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [settings, setSettings] = useState<Settings>({
+        discardFraction: discardFraction,
+        globalSpeed: 1.0
+    });
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
 
     const handleMouseMove = () => {
@@ -456,6 +466,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         borderRadius: '50%',
                         padding: '8px',
                     }}
+                    onClick={() => setShowSettings(true)}
                 >
                     <svg 
                         width="24" 
@@ -472,6 +483,78 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                     </svg>
                 </div>
             </div>
+            {showSettings && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: '#1a1a1a',
+                        padding: '20px',
+                        borderRadius: '8px',
+                        width: '300px'
+                    }}>
+                        <h2 style={{ color: 'white', marginTop: 0 }}>Settings</h2>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
+                                Discard Fraction (0-1):
+                            </label>
+                            <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.1"
+                                value={settings.discardFraction}
+                                onChange={(e) => setSettings({
+                                    ...settings,
+                                    discardFraction: parseFloat(e.target.value)
+                                })}
+                                style={{ width: '100%' }}
+                            />
+                            <span style={{ color: 'white' }}>{settings.discardFraction.toFixed(1)}</span>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
+                                Global Speed (0.1-2):
+                            </label>
+                            <input
+                                type="range"
+                                min="0.1"
+                                max="2"
+                                step="0.1"
+                                value={settings.globalSpeed}
+                                onChange={(e) => setSettings({
+                                    ...settings,
+                                    globalSpeed: parseFloat(e.target.value)
+                                })}
+                                style={{ width: '100%' }}
+                            />
+                            <span style={{ color: 'white' }}>{settings.globalSpeed.toFixed(1)}x</span>
+                        </div>
+                        <button
+                            onClick={() => setShowSettings(false)}
+                            style={{
+                                backgroundColor: '#333',
+                                color: 'white',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
