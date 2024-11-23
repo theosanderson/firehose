@@ -291,7 +291,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         for (let i = messageObjectsRef.current.length - 1; i >= 0; i--) {
             const message = messageObjectsRef.current[i];
             message.mesh.position.z += 100 * message.speed * settingsRef.current.globalSpeed * deltaTime;
-            message.mesh.renderOrder = message.arbitraryOrder;
+            (message.mesh as any).renderOrder = message.arbitraryOrder;
 
             if (message.special) {
                 (message.mesh as any).renderOrder = message.mesh.position.z + 10000;
