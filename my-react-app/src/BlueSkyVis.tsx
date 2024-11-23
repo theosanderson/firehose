@@ -194,9 +194,12 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         let wall = Math.floor(Math.random() * 4.04);
         
         // Discard messages based on discardFraction, regardless of wall type
-        if (wall!==-1 && discardFraction > 0 && Math.random() < discardFraction) {
+       
+        if (wall!==-1 && settingsRef.current.discardFraction > 0 && Math.random() < settingsRef.current.discardFraction) {
+          
             return;
         }
+     
 
         if (wall > 3) {
             wall = -1;
@@ -531,12 +534,12 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
-                                Global Speed (0.1-2):
+                                Global Speed:
                             </label>
                             <input
                                 type="range"
                                 min="0.1"
-                                max="2"
+                                max="5"
                                 step="0.1"
                                 value={settings.globalSpeed}
                                 onChange={(e) => {
