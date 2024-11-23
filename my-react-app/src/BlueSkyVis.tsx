@@ -8,8 +8,7 @@ import {
     UniversalCamera,
     StandardMaterial,
     MeshBuilder,
-    Material,
-    DynamicTexture
+    Material
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
 import { MessageObject, TextureUpdateResult } from './types';
@@ -249,7 +248,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         plane.material = material;
         plane.position.z = -tunnelLength;
 
-        (plane as any).renderOrder = 0;
+        (plane as any).renderOrder = 0; // Using type assertion for custom property
 
         if (wall === -1) {
             const { x, y } = getCoordsNotInCenter();
@@ -307,7 +306,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         // Handle connecting message fade out
         if (connectingMessageRef.current) {
-            const elapsed = (Date.now() - connectingMessageRef.current.createdAt) / 1000;
+            const elapsed = (Date.now() - (connectingMessageRef.current.createdAt || Date.now())) / 1000;
             if (elapsed > 2) { // Start fading after 2 seconds
                 const fadeProgress = Math.min((elapsed - 2) / 1, 1); // Fade over 1 second
                 const material = connectingMessageRef.current.mesh.material as StandardMaterial;
@@ -373,7 +372,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 speed: 0,
                 special: true,
                 arbitraryOrder: 20000,
-                createdAt: Date.now()
+                createdAt: Date.now() // Ensure createdAt is set when message is created
             };
         }
 
