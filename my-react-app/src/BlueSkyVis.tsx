@@ -617,7 +617,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 backgroundColor: "transparent",
                                 marginBottom: "15px",
                             }}>
-                                Backing audio
+                                Backing audio (hit "Play in browser")
                                 </button>
                         }
 
