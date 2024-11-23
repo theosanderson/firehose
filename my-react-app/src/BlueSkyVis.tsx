@@ -8,7 +8,8 @@ import {
     UniversalCamera,
     StandardMaterial,
     MeshBuilder,
-    Material
+    Material,
+    Analyser
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
 import { MessageObject, TextureUpdateResult } from './types';
@@ -281,6 +282,16 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         const deltaTime = (currentTime - lastFrameTimeRef.current) / 1000;
         lastFrameTimeRef.current = currentTime;
 
+        // Update audio data
+        if (analyserRef.current && audioDataRef.current) {
+            analyserRef.current.getByteFrequencyData(audioDataRef.current);
+            // Get average of frequencies
+            const sum = audioDataRef.current.reduce((a, b) => a + b, 0);
+            const avg = sum / audioDataRef.current.length;
+            // Map 0-255 to 0.1-3.0 for speed multiplier
+            settingsRef.current.globalSpeed = 0.1 + (avg / 255) * 2.9;
+        }
+
         // Update camera
         cameraRotationRef.current += deltaTime * 0.015 * camDirRef.current;
         if (cameraRotationRef.current > 0.13 * Math.PI/2) {
@@ -396,8 +407,30 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         };
 
-        // Start render loop
-        animationFrameRef.current = requestAnimationFrame(updateScene);
+        // Setup audio analyzer
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+            .then(stream => {
+                const audioContext = new AudioContext();
+                const source = audioContext.createMediaStreamSource(stream);
+                const babylonAnalyser = new Analyser(sceneRef.current!);
+                babylonAnalyser.FFT_SIZE = 32;
+                babylonAnalyser.SMOOTHING = 0.9;
+                
+                const webAudioAnalyser = audioContext.createAnalyser();
+                webAudioAnalyser.fftSize = 32;
+                source.connect(webAudioAnalyser);
+                
+                analyserRef.current = babylonAnalyser;
+                audioDataRef.current = new Uint8Array(babylonAnalyser.FFT_SIZE);
+                
+                // Start render loop after audio setup
+                animationFrameRef.current = requestAnimationFrame(updateScene);
+            })
+            .catch(err => {
+                console.error("Error accessing microphone:", err);
+                // Start render loop anyway if mic access fails
+                animationFrameRef.current = requestAnimationFrame(updateScene);
+            });
 
         // Handle resize
         const handleResize = () => {
@@ -430,6 +463,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         globalSpeed: 1.0,
         specialFrequency: 0.04
     });
+    const analyserRef = useRef<Analyser | null>(null);
+    const audioDataRef = useRef<Uint8Array | null>(null);
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
 
     const handleMouseMove = () => {
