@@ -338,8 +338,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         // Create connecting message after TexturePool is initialized
         if (textWrapperRef.current && sceneRef.current && texturePoolRef.current) {
-            const connectingText = "       < CONNECTING TO LIVE        BLUESKY FIREHOSE >   ";
-            const lines = textWrapperRef.current.wrapText(connectingText, 650);
+            
+            const lines = [
+                "< CONNECTING TO LIVE",
+                " BLUESKY FIREHOSE >"
+            ]
             const textureObj = texturePoolRef.current.acquire(lines.length);
             const { lineCount } = updateTextTexture(textureObj, lines, true);
             
