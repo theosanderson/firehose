@@ -11,7 +11,7 @@ import {
     Material
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
-import { MessageObject, TextureUpdateResult } from './types';
+import { MessageObject, TextureUpdateResult, Settings } from './types';
 
 const fontSize = 32;
 const lineHeight = fontSize * 1.1;
@@ -49,13 +49,6 @@ class TextWrapper {
 interface BlueSkyVizProps {
     websocketUrl?: string;
     discardFraction?: number;
-}
-
-interface Settings {
-    discardFraction: number;
-    baseSpeed: number;
-    audioMultiplier: number;
-    specialFrequency: number;
 }
 
 // Add styles to head
