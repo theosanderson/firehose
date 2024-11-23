@@ -315,7 +315,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         // Create connecting message after TexturePool is initialized
         if (textWrapperRef.current && sceneRef.current && texturePoolRef.current) {
-            const connectingText = "< CONNECTING TO BLUESKY FIREHOSE >";
+            const connectingText = "< CONNECTING TO LIVE BLUESKY FIREHOSE >";
             const lines = textWrapperRef.current.wrapText(connectingText, 650);
             const textureObj = texturePoolRef.current.acquire(lines.length);
             const { lineCount } = updateTextTexture(textureObj, lines, true);
@@ -339,7 +339,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             material.separateCullingPass = true;
             
             plane.material = material;
-            plane.position = new Vector3(0, 0, -5);
+            plane.position = new Vector3(0, 0, 4);
             plane.rotation.y = Math.PI;
             (plane as any).renderOrder = 30000; // Ensure it renders on top of everything
 
