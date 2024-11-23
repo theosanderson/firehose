@@ -451,16 +451,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             />
             <div style={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '10px' }}>
                 <div
+                    className="control-button"
                     style={{
                         opacity: isMouseActive ? .7 : 0,
-                        transition: 'opacity 0.3s ease-in-out',
-                        cursor: 'pointer',
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        borderRadius: '50%',
-                        padding: '8px',
-                        ':hover': {
-                            opacity: '1'
-                        }
                     }}
                     onClick={() => {
                         if (document.fullscreenElement) {
