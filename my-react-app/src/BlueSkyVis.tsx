@@ -207,8 +207,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
     const createMessage = (text: string) => {
         if (!sceneRef.current || !texturePoolRef.current || !textWrapperRef.current) return;
+        console.log(settingsRef.current.specialFrequency);
 
-        let wall = Math.floor(Math.random() * (4 + settingsRef.current.specialFrequency));
+        let wall = Math.floor(Math.random() * (4 + 1* settingsRef.current.specialFrequency));
         
         // Discard messages based on discardFraction, regardless of wall type
         if (wall > 3) {
@@ -422,7 +423,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     });
     const settingsRef = useRef<Settings>({
         discardFraction: discardFraction,
-        globalSpeed: 1.0
+        globalSpeed: 1.0,
+        specialFrequency: 0.04
     });
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
 
@@ -603,7 +605,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
-                                Special Post Frequency:
+                                Focal post intensity:
                             </label>
                             <input
                                 type="range"
