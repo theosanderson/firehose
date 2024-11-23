@@ -272,7 +272,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Update messages
         for (let i = messageObjectsRef.current.length - 1; i >= 0; i--) {
             const message = messageObjectsRef.current[i];
-            message.mesh.position.z += 100 * message.speed * settings.globalSpeed * deltaTime;
+            message.mesh.position.z += 100 * message.speed * settingsRef.current.globalSpeed * deltaTime;
             message.mesh.renderOrder = message.arbitraryOrder;
 
             if (message.special) {
@@ -394,7 +394,10 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         discardFraction: discardFraction,
         globalSpeed: 1.0
     });
-    console.log(settings);
+    const settingsRef = useRef<Settings>({
+        discardFraction: discardFraction,
+        globalSpeed: 1.0
+    });
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
 
     const handleMouseMove = () => {
@@ -514,10 +517,14 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 max="1"
                                 step="0.1"
                                 value={settings.discardFraction}
-                                onChange={(e) => setSettings({
-                                    ...settings,
-                                    discardFraction: parseFloat(e.target.value)
-                                })}
+                                onChange={(e) => {
+                                    const newValue = parseFloat(e.target.value);
+                                    setSettings(prev => ({
+                                        ...prev,
+                                        discardFraction: newValue
+                                    }));
+                                    settingsRef.current.discardFraction = newValue;
+                                }}
                                 style={{ width: '100%' }}
                             />
                             <span style={{ color: 'white' }}>{settings.discardFraction.toFixed(1)}</span>
@@ -532,10 +539,14 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 max="2"
                                 step="0.1"
                                 value={settings.globalSpeed}
-                                onChange={(e) => setSettings({
-                                    ...settings,
-                                    globalSpeed: parseFloat(e.target.value)
-                                })}
+                                onChange={(e) => {
+                                    const newValue = parseFloat(e.target.value);
+                                    setSettings(prev => ({
+                                        ...prev,
+                                        globalSpeed: newValue
+                                    }));
+                                    settingsRef.current.globalSpeed = newValue;
+                                }}
                                 style={{ width: '100%' }}
                             />
                             <span style={{ color: 'white' }}>{settings.globalSpeed.toFixed(1)}x</span>
