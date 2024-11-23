@@ -8,6 +8,21 @@
       gtag('js', new Date());
       gtag('config', 'G-NDR7D0LP60');
     </script>
+    <style>
+.loading {  
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2em;
+  font-weight: bold;
+  color: #ddd;
+}
+
+body {
+  background-color: black;
+}
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bluesky Firehose in 3D (live)</title>
   </head>
@@ -15,7 +30,11 @@
     <div id="root"
     class=""
     
-    ></div>
+    >
+      <div class="loading">
+       
+      </div>
+  </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
