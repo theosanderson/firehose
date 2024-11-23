@@ -284,8 +284,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Handle connecting message fade out
         if (connectingMessageRef.current) {
             const elapsed = (Date.now() - connectingMessageRef.current.createdAt) / 1000;
-            if (elapsed > 3) { // Start fading after 3 seconds
-                const fadeProgress = Math.min((elapsed - 3) / 2, 1); // Fade over 2 seconds
+            if (elapsed > 2) { // Start fading after 2 seconds
+                const fadeProgress = Math.min((elapsed - 2) / 1, 1); // Fade over 1 second
                 const material = connectingMessageRef.current.mesh.material as StandardMaterial;
                 material.alpha = 1 - fadeProgress;
                 
@@ -315,7 +315,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         // Create connecting message after TexturePool is initialized
         if (textWrapperRef.current && sceneRef.current && texturePoolRef.current) {
-            const connectingText = "Connecting to the live Bluesky firehose...";
+            const connectingText = "< CONNECTING TO BLUESKY FIREHOSE >";
             const lines = textWrapperRef.current.wrapText(connectingText, 650);
             const textureObj = texturePoolRef.current.acquire(lines.length);
             const { lineCount } = updateTextTexture(textureObj, lines, true);
@@ -329,7 +329,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             const material = new StandardMaterial("connectingMat", sceneRef.current);
             material.diffuseTexture = textureObj.texture;
             material.specularColor = new Color3(0, 0, 0);
-            material.emissiveColor = new Color3(1, 1, 1);
+            // Add a green retro glow effect
+            material.emissiveColor = new Color3(0.2, 1, 0.2);
             material.backFaceCulling = false;
             material.diffuseTexture.hasAlpha = true;
             material.useAlphaFromDiffuseTexture = true;
