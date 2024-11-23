@@ -347,6 +347,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 " BLUESKY FIREHOSE >"
             ]
             const textureObj = texturePoolRef.current.acquire(lines.length);
+            
+            // Override font just for connecting message
+            const context = textureObj.texture.getContext();
+            context.font = `${fontSize}px sans-serif`;  // Remove bold
+            
             const { lineCount } = updateTextTexture(textureObj, lines, true);
             
             const height = lineCount * 0.75;
