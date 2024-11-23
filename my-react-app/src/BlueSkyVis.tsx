@@ -68,6 +68,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const camDirRef = useRef<number>(1);
     const textWrapperRef = useRef<TextWrapper | null>(null);
     const animationFrameRef = useRef<number>();
+    const connectingMessageRef = useRef<MessageObject | null>(null);
 
     const tunnelLength = 40;
 
@@ -280,6 +281,22 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         }
 
+        // Handle connecting message fade out
+        if (connectingMessageRef.current) {
+            const elapsed = (Date.now() - connectingMessageRef.current.createdAt) / 1000;
+            if (elapsed > 3) { // Start fading after 3 seconds
+                const fadeProgress = Math.min((elapsed - 3) / 2, 1); // Fade over 2 seconds
+                const material = connectingMessageRef.current.mesh.material as StandardMaterial;
+                material.alpha = 1 - fadeProgress;
+                
+                if (fadeProgress === 1) {
+                    connectingMessageRef.current.mesh.dispose();
+                    texturePoolRef.current?.release(connectingMessageRef.current.textureObj);
+                    connectingMessageRef.current = null;
+                }
+            }
+        }
+
         sceneRef.current.render();
         animationFrameRef.current = requestAnimationFrame(updateScene);
     };
@@ -293,6 +310,42 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         textWrapperRef.current = new TextWrapper();
 
         setupScene(sceneRef.current);
+
+        // Create connecting message
+        if (textWrapperRef.current && sceneRef.current && texturePoolRef.current) {
+            const connectingText = "Connecting to the live Bluesky firehose...";
+            const lines = textWrapperRef.current.wrapText(connectingText, 650);
+            const textureObj = texturePoolRef.current.acquire(lines.length);
+            const { lineCount } = updateTextTexture(textureObj, lines, true);
+            
+            const height = lineCount * 0.75;
+            const plane = MeshBuilder.CreatePlane("connecting", {
+                width: 7,
+                height
+            }, sceneRef.current);
+
+            const material = new StandardMaterial("connectingMat", sceneRef.current);
+            material.diffuseTexture = textureObj.texture;
+            material.specularColor = new Color3(0, 0, 0);
+            material.emissiveColor = new Color3(1, 1, 1);
+            material.backFaceCulling = false;
+            material.diffuseTexture.hasAlpha = true;
+            material.useAlphaFromDiffuseTexture = true;
+            material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+            
+            plane.material = material;
+            plane.position = new Vector3(0, 0, -20);
+            plane.rotation.y = Math.PI;
+
+            connectingMessageRef.current = {
+                mesh: plane,
+                textureObj,
+                speed: 0,
+                special: true,
+                arbitraryOrder: 20000,
+                createdAt: Date.now()
+            };
+        }
         cameraRef.current = setupCamera(sceneRef.current);
         texturePoolRef.current = new TexturePool(sceneRef.current, lineHeight);
 
