@@ -473,6 +473,34 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         borderRadius: '50%',
                         padding: '8px',
                     }}
+                    onClick={() => window.open('https://bsky.app/profile/theo.io/post/3lb3uzxotxs2w', '_blank')}
+                >
+                    <svg 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="white" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                    >
+                        <path d="M12 1L9 4L12 7L15 4L12 1Z"/>
+                        <path d="M12 7L9 10L12 13L15 10L12 7Z"/>
+                        <path d="M12 13L9 16L12 19L15 16L12 13Z"/>
+                        <path d="M19 10L16 13L19 16L22 13L19 10Z"/>
+                        <path d="M5 10L2 13L5 16L8 13L5 10Z"/>
+                    </svg>
+                </div>
+                <div
+                    style={{
+                        opacity: isMouseActive ? 1 : 0,
+                        transition: 'opacity 0.3s ease-in-out',
+                        cursor: 'pointer',
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                        borderRadius: '50%',
+                        padding: '8px',
+                    }}
                     onClick={() => setShowSettings(true)}
                 >
                     <svg 
