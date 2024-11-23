@@ -188,7 +188,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         let wall = Math.floor(Math.random() * 4.04);
         
         // Discard messages based on discardFraction, regardless of wall type
-        if (discardFraction > 0 && Math.random() < discardFraction) {
+        if (wall!==-1 && discardFraction > 0 && Math.random() < discardFraction) {
             return;
         }
 
