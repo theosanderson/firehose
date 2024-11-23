@@ -122,12 +122,12 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         return camera;
     };
 
-    const updateTextTexture = (textureObj: any, lines: string[], specialColor: boolean): TextureUpdateResult => {
+    const updateTextTexture = (textureObj: any, lines: string[], specialColor: boolean, useBoldFont: boolean = true): TextureUpdateResult => {
         const texture = textureObj.texture;
         const context = texture.getContext();
         context.clearRect(0, 0, texture.getSize().width, texture.getSize().height);
         
-        context.font = `bold ${fontSize}px sans-serif`;
+        context.font = `${useBoldFont ? 'bold ' : ''}${fontSize}px sans-serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
 
@@ -352,7 +352,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             const context = textureObj.texture.getContext();
             context.font = `${fontSize}px sans-serif`;  // Remove bold
             
-            const { lineCount } = updateTextTexture(textureObj, lines, true);
+            const { lineCount } = updateTextTexture(textureObj, lines, true, false);
             
             const height = lineCount * 0.75;
             const plane = MeshBuilder.CreatePlane("connecting", {
