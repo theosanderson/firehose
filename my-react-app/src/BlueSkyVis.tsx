@@ -411,6 +411,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
     const [isMouseActive, setIsMouseActive] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showMusic, setShowMusic] = useState(false);
     const [settings, setSettings] = useState<Settings>({
         discardFraction: discardFraction,
         globalSpeed: 1.0
@@ -531,15 +532,16 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                     </svg>
                 </div>
             </div>
-            {showSettings && (
+            {true && (
                 <div style={{
+                   
                     position: 'fixed',
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
                     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    display: 'flex',
+                    display: showSettings ? 'flex' : 'none',
                     justifyContent: 'center',
                     alignItems: 'center',
                     zIndex: 1000
@@ -595,6 +597,29 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                             />
                             <span style={{ color: 'white' }}>{settings.globalSpeed.toFixed(1)}x</span>
                         </div>
+                        {
+                            showMusic?
+                            <iframe width="100%" height="100" scrolling="no" frameBorder="no" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/961687216&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+                            style={{borderRadius:"10px",
+                                marginBottom: "15px",
+
+
+                            }}
+
+                            ></iframe>
+                            :
+                            <button onClick={() => setShowMusic(true)} style={{
+                               // style as link
+                             display:"block",
+                             textDecoration: "underline",
+                                color: "#aaa",
+                                backgroundColor: "transparent",
+                                marginBottom: "15px",
+                            }}>
+                                Backing audio
+                                </button>
+                        }
+
                         <button
                             onClick={() => setShowSettings(false)}
                             style={{
