@@ -310,8 +310,10 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         textWrapperRef.current = new TextWrapper();
 
         setupScene(sceneRef.current);
+        cameraRef.current = setupCamera(sceneRef.current);
+        texturePoolRef.current = new TexturePool(sceneRef.current, lineHeight);
 
-        // Create connecting message
+        // Create connecting message after TexturePool is initialized
         if (textWrapperRef.current && sceneRef.current && texturePoolRef.current) {
             const connectingText = "Connecting to the live Bluesky firehose...";
             const lines = textWrapperRef.current.wrapText(connectingText, 650);
@@ -346,8 +348,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 createdAt: Date.now()
             };
         }
-        cameraRef.current = setupCamera(sceneRef.current);
-        texturePoolRef.current = new TexturePool(sceneRef.current, lineHeight);
 
         // Connect WebSocket
         const ws = new WebSocket(websocketUrl);
