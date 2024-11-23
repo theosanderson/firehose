@@ -75,7 +75,8 @@ document.head.appendChild(styleSheet);
 const BlueSkyViz: React.FC<BlueSkyVizProps> = ({ 
     websocketUrl = 'wss://bsky-relay.c.theo.io/subscribe?wantedCollections=app.bsky.feed.post',
     discardFraction = new URLSearchParams(window.location.search).get('discardFrac') ? 
-        parseFloat(new URLSearchParams(window.location.search).get('discardFrac')!) : 0
+        parseFloat(new URLSearchParams(window.location.search).get('discardFrac')!) : 
+        (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ? 0.5 : 0)
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<Engine | null>(null);
