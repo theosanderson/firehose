@@ -54,7 +54,8 @@ interface BlueSkyVizProps {
 
 const BlueSkyViz: React.FC<BlueSkyVizProps> = ({ 
     websocketUrl = 'wss://bsky-relay.c.theo.io/subscribe?wantedCollections=app.bsky.feed.post',
-    discardFraction = 0 
+    discardFraction = new URLSearchParams(window.location.search).get('discardFrac') ? 
+        parseFloat(new URLSearchParams(window.location.search).get('discardFrac')!) : 0
 }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const engineRef = useRef<Engine | null>(null);
@@ -186,7 +187,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         let wall = Math.floor(Math.random() * 4.04);
         
-        if (wall !== -1 && discardFraction && Math.random() < discardFraction) {
+        // Discard messages based on discardFraction, regardless of wall type
+        if (discardFraction > 0 && Math.random() < discardFraction) {
             return;
         }
 
