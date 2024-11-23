@@ -468,7 +468,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const analyserRef = useRef<Analyser | null>(null);
     const audioDataRef = useRef<Uint8Array | null>(null);
     const lastAudioUpdateRef = useRef<number>(0);
-    const AUDIO_UPDATE_INTERVAL = 100; // Update every 100ms
+    const AUDIO_UPDATE_INTERVAL = 0; // Update every 100ms
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
 
     const handleMouseMove = () => {
