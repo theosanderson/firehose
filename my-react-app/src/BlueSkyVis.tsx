@@ -291,7 +291,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 const sum = audioDataRef.current.reduce((a, b) => a + b, 0);
                 const avg = sum / audioDataRef.current.length;
                 // Map 0-255 to 0.1-3.0 for speed multiplier
-                settingsRef.current.globalSpeed = 0.1 + (avg / 255) * 29;
+                settingsRef.current.globalSpeed = 0.1 + (avg / 255) * 2.9;
                 lastAudioUpdateRef.current = now;
                 console.log("audioDataRef.current",audioDataRef.current)
             }
