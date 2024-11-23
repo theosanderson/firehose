@@ -54,7 +54,8 @@ interface BlueSkyVizProps {
 
 interface Settings {
     discardFraction: number;
-    globalSpeed: number;
+    baseSpeed: number;
+    audioMultiplier: number;
     specialFrequency: number;
 }
 
@@ -290,8 +291,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 // Get average of frequencies
                 const sum = audioDataRef.current.reduce((a, b) => a + b, 0);
                 const avg = sum / audioDataRef.current.length;
-                // Map 0-255 to 0.1-3.0 for speed multiplier
-                settingsRef.current.globalSpeed = 0.1 + (avg / 255) * 2.9;
+                // Map 0-255 to 0.1-3.0 for audio multiplier
+                settingsRef.current.audioMultiplier = 0.1 + (avg / 255) * 2.9;
                 lastAudioUpdateRef.current = now;
                 console.log("audioDataRef.current",audioDataRef.current)
             }
@@ -309,7 +310,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Update messages
         for (let i = messageObjectsRef.current.length - 1; i >= 0; i--) {
             const message = messageObjectsRef.current[i];
-            message.mesh.position.z += 100 * message.speed * settingsRef.current.globalSpeed * deltaTime;
+            message.mesh.position.z += 100 * message.speed * settingsRef.current.baseSpeed * settingsRef.current.audioMultiplier * deltaTime;
             (message.mesh as any).renderOrder = message.arbitraryOrder;
 
             if (message.special) {
@@ -457,12 +458,14 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const [showMusic, setShowMusic] = useState(false);
     const [settings, setSettings] = useState<Settings>({
         discardFraction: discardFraction,
-        globalSpeed: 1.0,
+        baseSpeed: 1.0,
+        audioMultiplier: 1.0,
         specialFrequency: 0.04
     });
     const settingsRef = useRef<Settings>({
         discardFraction: discardFraction,
-        globalSpeed: 1.0,
+        baseSpeed: 1.0,
+        audioMultiplier: 1.0,
         specialFrequency: 0.04
     });
     const analyserRef = useRef<Analyser | null>(null);
@@ -626,25 +629,25 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
-                                Global Speed:
+                                Base Speed:
                             </label>
                             <input
                                 type="range"
                                 min="0.1"
                                 max="5"
                                 step="0.1"
-                                value={settings.globalSpeed}
+                                value={settings.baseSpeed}
                                 onChange={(e) => {
                                     const newValue = parseFloat(e.target.value);
                                     setSettings(prev => ({
                                         ...prev,
-                                        globalSpeed: newValue
+                                        baseSpeed: newValue
                                     }));
-                                    settingsRef.current.globalSpeed = newValue;
+                                    settingsRef.current.baseSpeed = newValue;
                                 }}
                                 style={{ width: '100%' }}
                             />
-                            <span style={{ color: 'white' }}>{settings.globalSpeed.toFixed(1)}x</span>
+                            <span style={{ color: 'white' }}>{settings.baseSpeed.toFixed(1)}x</span>
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
