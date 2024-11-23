@@ -473,23 +473,23 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         borderRadius: '50%',
                         padding: '8px',
                     }}
-                    onClick={() => window.open('https://bsky.app/profile/theo.io/post/3lb3uzxotxs2w', '_blank')}
+                    onClick={() => {
+                        const win = window.open('https://bsky.app/profile/theo.io/post/3lb3uzxotxs2w', '_blank');
+                        win?.focus();
+                    }}
                 >
                     <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
                         width="24" 
                         height="24" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="white" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
+                        viewBox="0 0 48 48" 
+                        className="inline-block"
                     >
-                        <path d="M12 1L9 4L12 7L15 4L12 1Z"/>
-                        <path d="M12 7L9 10L12 13L15 10L12 7Z"/>
-                        <path d="M12 13L9 16L12 19L15 16L12 13Z"/>
-                        <path d="M19 10L16 13L19 16L22 13L19 10Z"/>
-                        <path d="M5 10L2 13L5 16L8 13L5 10Z"/>
+                        <g fill="none" stroke="white" strokeLinecap="round" strokeLinejoin="round" strokeWidth="4">
+                            <path fill="white" d="M5 12c3.664-4.294 14.081 6.82 19 13c4.92-6.18 15.337-17.294 19-13c.679.65 1.443 2.877-1 6c-.678.976-1.814 3.706-1 8c0 1.139-1.115 2.952-6 1c2.375 1.627 6.85 6.096 4 10c-2.714 3.416-9.035 7.457-13-2l-2-4l-2 4c-3.964 9.457-10.286 5.416-13 2c-2.85-3.904 1.626-8.373 4-10c-4.885 1.952-6 .139-6-1c.814-4.294-.321-7.024-1-8c-2.442-3.123-1.678-5.35-1-6"></path>
+                            <path d="M24.032 23C23.534 17.864 28.913 7 33 7"></path>
+                            <path d="M23.968 23C24.466 17.864 19.087 7 15 7"></path>
+                        </g>
                     </svg>
                 </div>
                 <div
