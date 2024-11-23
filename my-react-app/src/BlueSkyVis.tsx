@@ -335,10 +335,13 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             material.diffuseTexture.hasAlpha = true;
             material.useAlphaFromDiffuseTexture = true;
             material.transparencyMode = Material.MATERIAL_ALPHABLEND;
+            material.alphaMode = Engine.ALPHA_COMBINE;
+            material.separateCullingPass = true;
             
             plane.material = material;
-            plane.position = new Vector3(0, 0, 5);
+            plane.position = new Vector3(0, 0, -5);
             plane.rotation.y = Math.PI;
+            (plane as any).renderOrder = 30000; // Ensure it renders on top of everything
 
             connectingMessageRef.current = {
                 mesh: plane,
