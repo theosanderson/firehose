@@ -664,6 +664,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 style={{ marginRight: '8px' }}
                             />
                             <span style={{ color: 'white' }}>Audio Reactive</span>
+                            </div>
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
