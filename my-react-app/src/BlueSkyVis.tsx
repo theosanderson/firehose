@@ -277,16 +277,12 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         // Update audio data at specified interval
         if (settingsRef.current.audioEnabled && analyserRef.current && audioDataRef.current) {
-            const now = Date.now();
-            if (now - lastAudioUpdateRef.current >= AUDIO_UPDATE_INTERVAL) {
-                analyserRef.current.getByteFrequencyData(audioDataRef.current);
-                // Get average of frequencies
-                const sum = audioDataRef.current.reduce((a, b) => a + b, 0);
-                const avg = sum / audioDataRef.current.length;
-                // Map 0-255 to 0.1-3.0 for audio multiplier
-                settingsRef.current.audioMultiplier = 0.1 + (avg / 255) * 2.9;
-                lastAudioUpdateRef.current = now;
-            }
+            analyserRef.current.getByteFrequencyData(audioDataRef.current);
+            // Get average of frequencies
+            const sum = audioDataRef.current.reduce((a, b) => a + b, 0);
+            const avg = sum / audioDataRef.current.length;
+            // Map 0-255 to 0.1-3.0 for audio multiplier
+            settingsRef.current.audioMultiplier = 0.1 + (avg / 255) * 2.9;
         } else {
             settingsRef.current.audioMultiplier = 1.0;
         }
@@ -446,8 +442,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     });
     const analyserRef = useRef<AnalyserNode | null>(null);
     const audioDataRef = useRef<Uint8Array | null>(null);
-    const lastAudioUpdateRef = useRef<number>(0);
-    const AUDIO_UPDATE_INTERVAL = 0; // Update every 100ms
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
 
     const handleMouseMove = () => {
