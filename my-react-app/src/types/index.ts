@@ -18,3 +18,11 @@ export interface MessageObject {
     arbitraryOrder: number;
     createdAt?: number;
 }
+
+export interface Settings {
+    discardFraction: number;
+    baseSpeed: number;
+    audioMultiplier: number;
+    specialFrequency: number;
+    audioEnabled: boolean;
+}

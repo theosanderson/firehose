@@ -11,7 +11,7 @@ import {
     Material
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
-import { MessageObject, TextureUpdateResult } from './types';
+import { MessageObject, TextureUpdateResult, Settings } from './types';
 
 const fontSize = 32;
 const lineHeight = fontSize * 1.1;
@@ -49,12 +49,6 @@ class TextWrapper {
 interface BlueSkyVizProps {
     websocketUrl?: string;
     discardFraction?: number;
-}
-
-interface Settings {
-    discardFraction: number;
-    globalSpeed: number;
-    specialFrequency: number;
 }
 
 // Add styles to head
@@ -281,6 +275,17 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         const deltaTime = (currentTime - lastFrameTimeRef.current) / 1000;
         lastFrameTimeRef.current = currentTime;
 
+        // Calculate audio multiplier
+        let audioMultiplier = 1.0;
+        if (settingsRef.current.audioEnabled && analyserRef.current && audioDataRef.current) {
+            analyserRef.current.getByteFrequencyData(audioDataRef.current);
+            // Get average of frequencies
+            const sum = audioDataRef.current.reduce((a, b) => a + b, 0);
+            const avg = sum / audioDataRef.current.length;
+            // Map 0-255 to 0.1-3.0 for audio multiplier
+            audioMultiplier = 0.1 + (avg / 255) * 2.9;
+        }
+
         // Update camera
         cameraRotationRef.current += deltaTime * 0.015 * camDirRef.current;
         if (cameraRotationRef.current > 0.13 * Math.PI/2) {
@@ -293,7 +298,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Update messages
         for (let i = messageObjectsRef.current.length - 1; i >= 0; i--) {
             const message = messageObjectsRef.current[i];
-            message.mesh.position.z += 100 * message.speed * settingsRef.current.globalSpeed * deltaTime;
+            message.mesh.position.z += 100 * message.speed * settingsRef.current.baseSpeed * audioMultiplier * deltaTime;
             (message.mesh as any).renderOrder = message.arbitraryOrder;
 
             if (message.special) {
@@ -422,14 +427,20 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const [showMusic, setShowMusic] = useState(false);
     const [settings, setSettings] = useState<Settings>({
         discardFraction: discardFraction,
-        globalSpeed: 1.0,
-        specialFrequency: 0.04
+        baseSpeed: 1.0,
+        audioMultiplier: 1.0,
+        specialFrequency: 0.04,
+        audioEnabled: false
     });
     const settingsRef = useRef<Settings>({
         discardFraction: discardFraction,
-        globalSpeed: 1.0,
-        specialFrequency: 0.04
+        baseSpeed: 1.0,
+        audioMultiplier: 1.0,
+        specialFrequency: 0.04,
+        audioEnabled: false
     });
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const audioDataRef = useRef<Uint8Array | null>(null);
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
 
     const handleMouseMove = () => {
@@ -587,25 +598,72 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
-                                Global Speed:
+                                Speed:
                             </label>
                             <input
                                 type="range"
                                 min="0.1"
                                 max="5"
                                 step="0.1"
-                                value={settings.globalSpeed}
+                                value={settings.baseSpeed}
                                 onChange={(e) => {
                                     const newValue = parseFloat(e.target.value);
                                     setSettings(prev => ({
                                         ...prev,
-                                        globalSpeed: newValue
+                                        baseSpeed: newValue
                                     }));
-                                    settingsRef.current.globalSpeed = newValue;
+                                    settingsRef.current.baseSpeed = newValue;
                                 }}
                                 style={{ width: '100%' }}
                             />
-                            <span style={{ color: 'white' }}>{settings.globalSpeed.toFixed(1)}x</span>
+                            <span style={{ color: 'white' }}>{settings.baseSpeed.toFixed(1)}x</span>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <div 
+                                onClick={() => {
+                                    const newValue = !settings.audioEnabled;
+                                    setSettings(prev => ({
+                                        ...prev,
+                                        audioEnabled: newValue
+                                    }));
+                                    settingsRef.current.audioEnabled = newValue;
+                                    
+                                    if (newValue && !analyserRef.current) {
+                                        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                                            .then(stream => {
+                                                const audioContext = new AudioContext();
+                                                const source = audioContext.createMediaStreamSource(stream);
+                                                const webAudioAnalyser = audioContext.createAnalyser();
+                                                webAudioAnalyser.fftSize = 32;
+                                                webAudioAnalyser.smoothingTimeConstant = 0.4;
+                                                source.connect(webAudioAnalyser);
+                                                
+                                                analyserRef.current = webAudioAnalyser;
+                                                audioDataRef.current = new Uint8Array(webAudioAnalyser.frequencyBinCount);
+                                            })
+                                            .catch(err => {
+                                                console.error("Error accessing microphone:", err);
+                                                setSettings(prev => ({
+                                                    ...prev,
+                                                    audioEnabled: false
+                                                }));
+                                                settingsRef.current.audioEnabled = false;
+                                            });
+                                    }
+                                }}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
+                                    React to microphone input:
+                                </label>
+                                <input
+                                    type="checkbox"
+                                    checked={settings.audioEnabled}
+                                    onChange={() => {}} // Handle click on parent div instead
+                                style={{ marginRight: '8px' }}
+                            />
+                            <span style={{ color: 'white' }}>Audio Reactive</span>
+                            </div>
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
