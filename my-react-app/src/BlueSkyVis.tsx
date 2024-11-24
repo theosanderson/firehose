@@ -599,7 +599,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         </div>
                         <div style={{ marginBottom: '15px' }}>
                             <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
-                                Base Speed:
+                                Speed:
                             </label>
                             <input
                                 type="range"
