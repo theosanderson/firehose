@@ -661,36 +661,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                     type="checkbox"
                                     checked={settings.audioEnabled}
                                     onChange={() => {}} // Handle click on parent div instead
-                                    const newValue = e.target.checked;
-                                    setSettings(prev => ({
-                                        ...prev,
-                                        audioEnabled: newValue
-                                    }));
-                                    settingsRef.current.audioEnabled = newValue;
-                                    
-                                    if (newValue && !analyserRef.current) {
-                                        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-                                            .then(stream => {
-                                                const audioContext = new AudioContext();
-                                                const source = audioContext.createMediaStreamSource(stream);
-                                                const webAudioAnalyser = audioContext.createAnalyser();
-                                                webAudioAnalyser.fftSize = 32;
-                                                webAudioAnalyser.smoothingTimeConstant = 0.4;
-                                                source.connect(webAudioAnalyser);
-                                                
-                                                analyserRef.current = webAudioAnalyser;
-                                                audioDataRef.current = new Uint8Array(webAudioAnalyser.frequencyBinCount);
-                                            })
-                                            .catch(err => {
-                                                console.error("Error accessing microphone:", err);
-                                                setSettings(prev => ({
-                                                    ...prev,
-                                                    audioEnabled: false
-                                                }));
-                                                settingsRef.current.audioEnabled = false;
-                                            });
-                                    }
-                                }}
                                 style={{ marginRight: '8px' }}
                             />
                             <span style={{ color: 'white' }}>Audio Reactive</span>
