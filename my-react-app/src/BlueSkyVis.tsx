@@ -275,16 +275,15 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         const deltaTime = (currentTime - lastFrameTimeRef.current) / 1000;
         lastFrameTimeRef.current = currentTime;
 
-        // Update audio data at specified interval
+        // Calculate audio multiplier
+        let audioMultiplier = 1.0;
         if (settingsRef.current.audioEnabled && analyserRef.current && audioDataRef.current) {
             analyserRef.current.getByteFrequencyData(audioDataRef.current);
             // Get average of frequencies
             const sum = audioDataRef.current.reduce((a, b) => a + b, 0);
             const avg = sum / audioDataRef.current.length;
             // Map 0-255 to 0.1-3.0 for audio multiplier
-            settingsRef.current.audioMultiplier = 0.1 + (avg / 255) * 2.9;
-        } else {
-            settingsRef.current.audioMultiplier = 1.0;
+            audioMultiplier = 0.1 + (avg / 255) * 2.9;
         }
 
         // Update camera
@@ -299,7 +298,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Update messages
         for (let i = messageObjectsRef.current.length - 1; i >= 0; i--) {
             const message = messageObjectsRef.current[i];
-            message.mesh.position.z += 100 * message.speed * settingsRef.current.baseSpeed * settingsRef.current.audioMultiplier * deltaTime;
+            message.mesh.position.z += 100 * message.speed * settingsRef.current.baseSpeed * audioMultiplier * deltaTime;
             (message.mesh as any).renderOrder = message.arbitraryOrder;
 
             if (message.special) {
