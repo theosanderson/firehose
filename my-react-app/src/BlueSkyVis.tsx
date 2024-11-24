@@ -655,7 +655,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 style={{ cursor: 'pointer' }}
                             >
                                 <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
-                                    Enable Audio Reactivity:
+                                    React to microphone input:
                                 </label>
                                 <input
                                     type="checkbox"
