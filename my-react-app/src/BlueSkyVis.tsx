@@ -641,7 +641,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                                 const source = audioContext.createMediaStreamSource(stream);
                                                 const webAudioAnalyser = audioContext.createAnalyser();
                                                 webAudioAnalyser.fftSize = 32;
-                                                webAudioAnalyser.smoothingTimeConstant = 0.9;
+                                                webAudioAnalyser.smoothingTimeConstant = 0.4;
                                                 source.connect(webAudioAnalyser);
                                                 
                                                 analyserRef.current = webAudioAnalyser;
