@@ -328,6 +328,21 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         }
 
+        // Update spaceship position
+        if (settings.spaceshipEnabled && spaceshipRef.current.mesh) {
+            const ship = spaceshipRef.current.mesh;
+            const targetX = Math.max(-7, Math.min(7, spaceshipRef.current.targetX));
+            const targetY = Math.max(-7, Math.min(7, spaceshipRef.current.targetY));
+            
+            // Smooth interpolation
+            ship.position.x += (targetX - ship.position.x) * 0.1;
+            ship.position.y += (targetY - ship.position.y) * 0.1;
+            
+            // Add slight rotation based on movement
+            ship.rotation.z = (targetX - ship.position.x) * 0.2;
+            ship.rotation.y = (targetY - ship.position.y) * 0.2;
+        }
+
         sceneRef.current.render();
         animationFrameRef.current = requestAnimationFrame(updateScene);
     };
@@ -401,6 +416,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         };
 
+        // Create spaceship if enabled
+        if (settings.spaceshipEnabled) {
+            createSpaceship(sceneRef.current);
+        }
+
         // Start render loop
         animationFrameRef.current = requestAnimationFrame(updateScene);
 
@@ -430,7 +450,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         baseSpeed: 1.0,
         audioMultiplier: 1.0,
         specialFrequency: 0.04,
-        audioEnabled: false
+        audioEnabled: false,
+        spaceshipEnabled: false
     });
     const settingsRef = useRef<Settings>({
         discardFraction: discardFraction,
@@ -442,8 +463,33 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const analyserRef = useRef<AnalyserNode | null>(null);
     const audioDataRef = useRef<Uint8Array | null>(null);
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
+    const spaceshipRef = useRef<SpaceshipState>({
+        mesh: null,
+        targetX: 0,
+        targetY: 0
+    });
 
-    const handleMouseMove = () => {
+    const createSpaceship = (scene: Scene) => {
+        if (spaceshipRef.current.mesh) return;
+        
+        const ship = MeshBuilder.CreateCylinder("spaceship", {
+            height: 0.5,
+            diameter: 0.8,
+            tessellation: 8
+        }, scene);
+        
+        const material = new StandardMaterial("shipMat", scene);
+        material.emissiveColor = new Color3(0.2, 0.6, 1);
+        material.specularColor = new Color3(0.2, 0.6, 1);
+        ship.material = material;
+        
+        ship.position = new Vector3(0, 0, 5);
+        ship.rotation.x = Math.PI / 2;
+        
+        spaceshipRef.current.mesh = ship;
+    };
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
         setIsMouseActive(true);
         
         // Clear existing timeout
@@ -455,6 +501,21 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         mouseTimeoutRef.current = setTimeout(() => {
             setIsMouseActive(false);
         }, 2000);
+
+        // Update spaceship target position
+        if (settings.spaceshipEnabled && canvasRef.current) {
+            const rect = canvasRef.current.getBoundingClientRect();
+            const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+            const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+            
+            // Convert screen coordinates to normalized -1 to 1
+            const x = ((clientX - rect.left) / rect.width) * 2 - 1;
+            const y = -((clientY - rect.top) / rect.height) * 2 + 1;
+            
+            // Scale to world coordinates
+            spaceshipRef.current.targetX = x * 7;
+            spaceshipRef.current.targetY = y * 7;
+        }
     };
 
     useEffect(() => {
@@ -686,6 +747,37 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 style={{ width: '100%' }}
                             />
                             <span style={{ color: 'white' }}>{(settings.specialFrequency * 100).toFixed(1)}%</span>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <div 
+                                onClick={() => {
+                                    const newValue = !settings.spaceshipEnabled;
+                                    setSettings(prev => ({
+                                        ...prev,
+                                        spaceshipEnabled: newValue
+                                    }));
+                                    settingsRef.current.spaceshipEnabled = newValue;
+                                    
+                                    if (newValue && sceneRef.current) {
+                                        createSpaceship(sceneRef.current);
+                                    } else if (!newValue && spaceshipRef.current.mesh) {
+                                        spaceshipRef.current.mesh.dispose();
+                                        spaceshipRef.current.mesh = null;
+                                    }
+                                }}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
+                                    Enable spaceship:
+                                </label>
+                                <input
+                                    type="checkbox"
+                                    checked={settings.spaceshipEnabled}
+                                    onChange={() => {}} // Handle click on parent div instead
+                                    style={{ marginRight: '8px' }}
+                                />
+                                <span style={{ color: 'white' }}>Show spaceship</span>
+                            </div>
                         </div>
                         {
                             showMusic?

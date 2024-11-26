@@ -25,4 +25,11 @@ export interface Settings {
     audioMultiplier: number;
     specialFrequency: number;
     audioEnabled: boolean;
+    spaceshipEnabled: boolean;
+}
+
+export interface SpaceshipState {
+    mesh: Mesh | null;
+    targetX: number;
+    targetY: number;
 }
