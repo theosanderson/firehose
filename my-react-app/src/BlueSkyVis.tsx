@@ -468,6 +468,14 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         }
 
+        // Update engine particles position if spaceship exists
+        if (settingsRef.current.spaceshipEnabled && spaceshipRef.current.mesh && !spaceshipRef.current.exploding) {
+            const engineParticles = sceneRef.current.getParticleSystemByID("engineParticles");
+            if (engineParticles) {
+                engineParticles.emitPosition = new Vector3(0, 0, 1.2);
+            }
+        }
+
         sceneRef.current.render();
         animationFrameRef.current = requestAnimationFrame(updateScene);
     };
@@ -755,7 +763,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Create engine particle system
         const engineParticles = new ParticleSystem("engineParticles", 2000, scene);
         engineParticles.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", scene);
-        engineParticles.emitter = new Vector3(0, 0, 1.2); // Position at back of ship
+        engineParticles.renderingGroupId = 1; // Ensure renders on top
+        engineParticles.emitter = container; // Use container as emitter
+        engineParticles.emitPosition = new Vector3(0, 0, 1.2); // Position relative to container
         engineParticles.minEmitBox = new Vector3(-0.2, -0.2, 0);
         engineParticles.maxEmitBox = new Vector3(0.2, 0.2, 0);
         engineParticles.color1 = new Color4(1, 0.5, 0, 1);
