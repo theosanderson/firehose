@@ -754,7 +754,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             new Vector3(0, 1, 0),
             scene
         );
-        ambientLight.intensity = 0.8;
+        ambientLight.intensity = 0.01;
         ambientLight.groundColor = new Color3(0.2, 0.2, 0.4);
     
         // Position the ship
@@ -765,21 +765,21 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         engineParticles.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", scene);
         engineParticles.renderingGroupId = 1; // Ensure renders on top
         engineParticles.emitter = container; // Use container as emitter
-        engineParticles.emitPosition = new Vector3(0, 0, 1.2); // Position relative to container
-        engineParticles.minEmitBox = new Vector3(-0.2, -0.2, 0);
-        engineParticles.maxEmitBox = new Vector3(0.2, 0.2, 0);
+        
+        engineParticles.minEmitBox = new Vector3(-0.2, -0.2, 1);
+        engineParticles.maxEmitBox = new Vector3(0.2, 0.2, 1);
         engineParticles.color1 = new Color4(1, 0.5, 0, 1);
         engineParticles.color2 = new Color4(1, 0.2, 0, 1);
         engineParticles.colorDead = new Color4(0, 0, 0, 0);
-        engineParticles.minSize = 0.1;
-        engineParticles.maxSize = 0.3;
-        engineParticles.minLifeTime = 0.1;
-        engineParticles.maxLifeTime = 0.3;
-        engineParticles.emitRate = 500;
+        engineParticles.minSize = 0.01;
+        engineParticles.maxSize = 0.2;
+        engineParticles.minLifeTime = 0.01;
+        engineParticles.maxLifeTime = 0.1;
+        engineParticles.emitRate = 15000;
         engineParticles.blendMode = ParticleSystem.BLENDMODE_ONEONE;
-        engineParticles.gravity = new Vector3(0, 0, -2);
-        engineParticles.direction1 = new Vector3(0, 0, -1);
-        engineParticles.direction2 = new Vector3(0, 0, -1);
+        engineParticles.gravity = new Vector3(0, 0, 2);
+        engineParticles.direction1 = new Vector3(0, 0, 100);
+        engineParticles.direction2 = new Vector3(0, 0, 100);
         engineParticles.minEmitPower = 2;
         engineParticles.maxEmitPower = 4;
         engineParticles.updateSpeed = 0.01;
