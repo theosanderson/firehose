@@ -19,7 +19,7 @@ import {
     TransformNode
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
-import { MessageObject, TextureUpdateResult, Settings } from './types';
+import { MessageObject, TextureUpdateResult, Settings, SpaceshipState } from './types';
 
 const fontSize = 32;
 const lineHeight = fontSize * 1.1;
