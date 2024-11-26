@@ -575,18 +575,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             createEngine(`engine${i}`, pos)
         );
         
-        // Add engine glow light
-        const engineLight = new PointLight("engineLight", new Vector3(-1.2, 0, 0), scene);
-        engineLight.diffuse = new Color3(1, 0.5, 0);
-        engineLight.intensity = 0.8;
-        engineLight.range = 2;
-        engineLight.parent = container;
-
-        // Add ambient light
-        const ambientLight = new HemisphericLight("ambientLight", new Vector3(0, 1, 0), scene);
-        ambientLight.intensity = 0.3;
-        ambientLight.groundColor = new Color3(0.2, 0.2, 0.4);
-        
         // Materials with improved properties
         const bodyMaterial = new StandardMaterial("bodyMat", scene);
         bodyMaterial.diffuseColor = new Color3(0.7, 0.7, 0.8);
@@ -628,6 +616,18 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         allMeshes.forEach(mesh => {
             mesh.parent = container;
         });
+
+        // Add engine glow light
+        const engineLight = new PointLight("engineLight", new Vector3(-1.2, 0, 0), scene);
+        engineLight.diffuse = new Color3(1, 0.5, 0);
+        engineLight.intensity = 0.8;
+        engineLight.range = 2;
+        engineLight.parent = container;
+
+        // Add ambient light
+        const ambientLight = new HemisphericLight("ambientLight", new Vector3(0, 1, 0), scene);
+        ambientLight.intensity = 0.3;
+        ambientLight.groundColor = new Color3(0.2, 0.2, 0.4);
         
         // Position the entire ship
         container.position = new Vector3(0, 0, 5);
