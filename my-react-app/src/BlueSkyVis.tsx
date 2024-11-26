@@ -13,8 +13,6 @@ import {
     Texture,
     PointLight,
     HemisphericLight,
-    GPUParticleSystem,
-    Quaternion,
     Mesh,
     CubeTexture,
     PBRMetallicRoughnessMaterial,
@@ -370,7 +368,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 
                 
                 // Collision box sizes
-                const shipSize = 0.4;
                 const messageHalfWidth = message.width / 2;
                 const messageHalfHeight = message.height / 2;
                 const messageDepth = 0.1; // Thickness of message plane
@@ -436,7 +433,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
                         
                         // Hide ship
-                        spaceshipRef.current.allMeshes.forEach(mesh => {
+                        spaceshipRef.current.allMeshes.forEach((mesh: Mesh) => {
                             mesh.visibility = 0;
                         });
                         
@@ -453,7 +450,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         // Reset after explosion
                         setTimeout(() => {
                             if (spaceshipRef.current.mesh) {
-                                spaceshipRef.current.allMeshes.forEach(mesh => {
+                                spaceshipRef.current.allMeshes.forEach((mesh: Mesh) => {
                                     mesh.visibility = 1;
                                 });
                                 spaceshipRef.current.exploding = false;
@@ -478,7 +475,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     useEffect(() => {
         // setTimeout to enable spaceship
         setTimeout(() => {
-            createSpaceship(sceneRef.current);
+            if (sceneRef.current) {
+                createSpaceship(sceneRef.current);
+            }
             settingsRef.current.spaceshipEnabled = true;
             setSettings({ ...settingsRef.current });
 
@@ -538,7 +537,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 speed: 0,
                 special: true,
                 arbitraryOrder: 20000,
-                createdAt: Date.now() // Ensure createdAt is set when message is created
+                createdAt: Date.now(),
+                width: 7,
+                height: lineCount * 0.75
             };
         }
 

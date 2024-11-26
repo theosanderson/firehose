@@ -31,6 +31,7 @@ export interface Settings {
 }
 
 export interface SpaceshipState {
+    allMeshes?: Mesh[];
     mesh: Mesh | null;
     targetX: number;
     targetY: number;
