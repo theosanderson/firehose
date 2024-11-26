@@ -432,12 +432,16 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
 
                         
-                        // Hide ship
+                        // Hide ship and stop engine particles
                         spaceshipRef.current.allMeshes?.forEach((mesh: Mesh) => {
                             mesh.visibility = 0;
                         });
+                        const engineParticles = sceneRef.current.getParticleSystemByID("engineParticles");
+                        if (engineParticles) {
+                            engineParticles.stop();
+                        }
                         
-                        // Start all particle systems
+                        // Start explosion particle systems
                         particleSystem.start();
                         sparkSystem.start();
 
@@ -459,6 +463,12 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 ship.position.y = 0;
                                 spaceshipRef.current.targetX = 0;
                                 spaceshipRef.current.targetY = 0;
+                                
+                                // Restart engine particles
+                                const engineParticles = sceneRef.current.getParticleSystemByID("engineParticles");
+                                if (engineParticles) {
+                                    engineParticles.start();
+                                }
                             }
                         }, 2000);
                     }
