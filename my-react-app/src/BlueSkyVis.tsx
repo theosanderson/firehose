@@ -433,7 +433,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
                         
                         // Hide ship
-                        spaceshipRef.current.allMeshes.forEach((mesh: Mesh) => {
+                        spaceshipRef.current.allMeshes?.forEach((mesh: Mesh) => {
                             mesh.visibility = 0;
                         });
                         
@@ -450,7 +450,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         // Reset after explosion
                         setTimeout(() => {
                             if (spaceshipRef.current.mesh) {
-                                spaceshipRef.current.allMeshes.forEach((mesh: Mesh) => {
+                                spaceshipRef.current.allMeshes?.forEach((mesh: Mesh) => {
                                     mesh.visibility = 1;
                                 });
                                 spaceshipRef.current.exploding = false;
@@ -603,7 +603,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const spaceshipRef = useRef<SpaceshipState>({
         mesh: null,
         targetX: 0,
-        targetY: 0
+        targetY: 0,
+        exploding: false
     });
 
     const createSpaceship = (scene: Scene) => {
@@ -770,7 +771,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Position the ship
         container.position = new Vector3(0, 0, 5);
     
-        spaceshipRef.current.mesh = container;
+        spaceshipRef.current.mesh = container as unknown as Mesh;
         spaceshipRef.current.allMeshes = allMeshes;
     };
     
