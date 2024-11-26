@@ -13,7 +13,6 @@ import {
     Texture,
     PointLight,
     HemisphericLight,
-    Color4,
     GPUParticleSystem,
     Quaternion
 } from '@babylonjs/core';
