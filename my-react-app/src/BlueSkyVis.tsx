@@ -407,11 +407,17 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                             mesh.visibility = 0;
                         });
                         
+                        // Start all particle systems
                         particleSystem.start();
-                        // cleanup
+                        sparkSystem.start();
+                        fragmentSystem.start();
+
+                        // Cleanup all particle systems
                         setTimeout(() => {
                             particleSystem.dispose();
-                        }, 1000);
+                            sparkSystem.dispose();
+                            fragmentSystem.dispose();
+                        }, 2500);
                         
                         // Reset after explosion
                         setTimeout(() => {
