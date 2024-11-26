@@ -329,14 +329,18 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         }
 
         // Update spaceship position
+        console.log("spaceship",settings.spaceshipEnabled, spaceshipRef.current.mesh);
         if (settings.spaceshipEnabled && spaceshipRef.current.mesh) {
             const ship = spaceshipRef.current.mesh;
+            console.log(spaceshipRef.current.targetX, spaceshipRef.current.targetY);
             const targetX = Math.max(-7, Math.min(7, spaceshipRef.current.targetX));
             const targetY = Math.max(-7, Math.min(7, spaceshipRef.current.targetY));
             
             // Smooth interpolation
             ship.position.x += (targetX - ship.position.x) * 0.1;
             ship.position.y += (targetY - ship.position.y) * 0.1;
+
+            console.log("pos",ship.position.x, ship.position.y);
             
             // Add slight rotation based on movement
             ship.rotation.z = (targetX - ship.position.x) * 0.2;
@@ -523,6 +527,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             
             spaceshipRef.current.targetX = x;
             spaceshipRef.current.targetY = y;
+            console.log(x, y);
         }
     };
 
