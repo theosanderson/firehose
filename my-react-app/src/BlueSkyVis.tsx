@@ -777,11 +777,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         engineParticles.maxLifeTime = 0.3;
         engineParticles.emitRate = 500;
         engineParticles.blendMode = ParticleSystem.BLENDMODE_ONEONE;
-        engineParticles.gravity = new Vector3(0, 0, 2);
-        engineParticles.direction1 = new Vector3(0, 0, 1);
-        engineParticles.direction2 = new Vector3(0, 0, 1);
-        engineParticles.minEmitPower = 1;
-        engineParticles.maxEmitPower = 2;
+        engineParticles.gravity = new Vector3(0, 0, -2);
+        engineParticles.direction1 = new Vector3(0, 0, -1);
+        engineParticles.direction2 = new Vector3(0, 0, -1);
+        engineParticles.minEmitPower = 2;
+        engineParticles.maxEmitPower = 4;
         engineParticles.updateSpeed = 0.01;
         engineParticles.parent = container;
         engineParticles.start();
