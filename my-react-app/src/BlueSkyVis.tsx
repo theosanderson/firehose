@@ -8,7 +8,9 @@ import {
     UniversalCamera,
     StandardMaterial,
     MeshBuilder,
-    Material
+    Material,
+    ParticleSystem,
+    Texture
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
 import { MessageObject, TextureUpdateResult, Settings } from './types';
@@ -225,10 +227,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         const textureObj = texturePoolRef.current.acquire(lines.length);
         const { lineCount } = updateTextTexture(textureObj, lines, wall === -1);
         
-        const height = lineCount * 0.75;
+        const planeHeight = lineCount * 0.75;
+        const planeWidth = 7;
         const plane = MeshBuilder.CreatePlane("message", {
-            width: 7,
-            height
+            width: planeWidth,
+            height: planeHeight
         }, sceneRef.current);
 
         const material = new StandardMaterial("messageMat", sceneRef.current);
@@ -264,7 +267,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             textureObj,
             speed: wall === -1 ? 0.005 + 0.5 * (0.08 + Math.random() * 0.12) : 0.05 + Math.random() * 0.005,
             special: wall === -1,
-            arbitraryOrder
+            arbitraryOrder,
+            width: planeWidth,
+            height: planeHeight
         });
     };
 
@@ -328,22 +333,90 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         }
 
-        // Update spaceship position
-        if (settingsRef.current.spaceshipEnabled && spaceshipRef.current.mesh) {
+        // Update spaceship position and check collisions
+        if (settingsRef.current.spaceshipEnabled && spaceshipRef.current.mesh && !spaceshipRef.current.exploding) {
             const ship = spaceshipRef.current.mesh;
-            console.log(spaceshipRef.current.targetX, spaceshipRef.current.targetY);
             const targetX = Math.max(-7, Math.min(7, spaceshipRef.current.targetX));
             const targetY = Math.max(-7, Math.min(7, spaceshipRef.current.targetY));
             
             // Smooth interpolation
             ship.position.x += (targetX - ship.position.x) * 0.1;
             ship.position.y += (targetY - ship.position.y) * 0.1;
-
-            console.log("pos",ship.position.x, ship.position.y);
             
             // Add slight rotation based on movement
             ship.rotation.z = (targetX - ship.position.x) * 0.2;
             ship.rotation.y = (targetY - ship.position.y) * 0.2;
+
+            // Check for collisions with messages
+            for (const message of messageObjectsRef.current) {
+                const dx = ship.position.x - message.mesh.position.x;
+                const dy = ship.position.y - message.mesh.position.y;
+                const dz = ship.position.z - message.mesh.position.z;
+                
+                // Collision box sizes (half-widths)
+                const shipSize = 0.4; // Half of ship diameter
+                const messageHalfWidth = message.width / 2;
+                const messageHalfHeight = message.height / 2;
+                
+                if (Math.abs(dx) < (shipSize + messageHalfWidth) &&
+                    Math.abs(dy) < (shipSize + messageHalfHeight) &&
+                    Math.abs(dz) < 0.5) { // Depth collision threshold
+                    
+                    // Start explosion
+                    spaceshipRef.current.exploding = true;
+                    spaceshipRef.current.explosionTime = Date.now();
+                    
+                    // Create particle system for explosion
+                    const particleSystem = new ParticleSystem("explosion", 2000, sceneRef.current!);
+                    particleSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACpJREFUeNpiYGBg+A/EQAxm/AdiEIYwQAJIEkwMeABRCszYBSBK8QFGgAADAGqnBwwDsb8GAAAAAElFTkSuQmCC", sceneRef.current!);
+                    
+                    particleSystem.emitter = ship;
+                    particleSystem.minEmitBox = new Vector3(-0.2, -0.2, -0.2);
+                    particleSystem.maxEmitBox = new Vector3(0.2, 0.2, 0.2);
+                    
+                    particleSystem.color1 = new Color4(1, 0.5, 0.2, 1.0);
+                    particleSystem.color2 = new Color4(0.85, 0.05, 0, 1.0);
+                    
+                    particleSystem.minSize = 0.1;
+                    particleSystem.maxSize = 0.5;
+                    
+                    particleSystem.minLifeTime = 0.3;
+                    particleSystem.maxLifeTime = 1.5;
+                    
+                    particleSystem.emitRate = 2000;
+                    
+                    particleSystem.blendMode = ParticleSystem.BLENDMODE_ONEONE;
+                    
+                    particleSystem.gravity = new Vector3(0, 0, 0);
+                    
+                    particleSystem.direction1 = new Vector3(-1, -1, -1);
+                    particleSystem.direction2 = new Vector3(1, 1, 1);
+                    
+                    particleSystem.minEmitPower = 1;
+                    particleSystem.maxEmitPower = 3;
+                    
+                    particleSystem.start();
+                    
+                    // Schedule cleanup
+                    setTimeout(() => {
+                        particleSystem.dispose();
+                        if (spaceshipRef.current.mesh) {
+                            spaceshipRef.current.mesh.dispose();
+                            spaceshipRef.current.mesh = null;
+                        }
+                        spaceshipRef.current.exploding = false;
+                        
+                        // Recreate ship after delay
+                        setTimeout(() => {
+                            if (settingsRef.current.spaceshipEnabled) {
+                                createSpaceship(sceneRef.current!);
+                            }
+                        }, 2000);
+                    }, 1500);
+                    
+                    break;
+                }
+            }
         }
 
         sceneRef.current.render();
