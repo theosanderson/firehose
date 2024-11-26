@@ -349,51 +349,69 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
             // Check for collisions with messages
             for (const message of messageObjectsRef.current) {
+                // Account for message rotation when checking collisions
+                const messageRotationY = message.mesh.rotation.y;
                 const dx = ship.position.x - message.mesh.position.x;
                 const dy = ship.position.y - message.mesh.position.y;
                 const dz = ship.position.z - message.mesh.position.z;
                 
-                // Collision box sizes (half-widths)
-                const shipSize = 0.4; // Half of ship diameter
+                // Transform ship position relative to message orientation
+                const rotatedDx = dx * Math.cos(-messageRotationY) - dz * Math.sin(-messageRotationY);
+                const rotatedDz = dx * Math.sin(-messageRotationY) + dz * Math.cos(-messageRotationY);
+                
+                // Collision box sizes
+                const shipSize = 0.4;
                 const messageHalfWidth = message.width / 2;
                 const messageHalfHeight = message.height / 2;
+                const messageDepth = 0.1; // Thickness of message plane
                 
-                if (Math.abs(dx) < (shipSize + messageHalfWidth) &&
-                    Math.abs(dy) < (shipSize + messageHalfHeight) &&
-                    Math.abs(dz) < 0.5) { // Depth collision threshold
+                if (Math.abs(rotatedDx) < messageHalfWidth &&
+                    Math.abs(dy) < messageHalfHeight &&
+                    Math.abs(rotatedDz) < messageDepth) {
                     
                     // Start explosion
                     spaceshipRef.current.exploding = true;
                     spaceshipRef.current.explosionTime = Date.now();
                     
                     // Create particle system for explosion
-                    const particleSystem = new ParticleSystem("explosion", 2000, sceneRef.current!);
+                    const particleSystem = new ParticleSystem("explosion", 5000, sceneRef.current!);
                     particleSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACpJREFUeNpiYGBg+A/EQAxm/AdiEIYwQAJIEkwMeABRCszYBSBK8QFGgAADAGqnBwwDsb8GAAAAAElFTkSuQmCC", sceneRef.current!);
                     
-                    particleSystem.emitter = ship;
-                    particleSystem.minEmitBox = new Vector3(-0.2, -0.2, -0.2);
-                    particleSystem.maxEmitBox = new Vector3(0.2, 0.2, 0.2);
+                    // Create emitter at ship's position
+                    const emitterPosition = ship.position.clone();
+                    particleSystem.emitter = emitterPosition;
                     
-                    particleSystem.color1 = new Color4(1, 0.5, 0.2, 1.0);
-                    particleSystem.color2 = new Color4(0.85, 0.05, 0, 1.0);
+                    // Larger emission box
+                    particleSystem.minEmitBox = new Vector3(-0.5, -0.5, -0.5);
+                    particleSystem.maxEmitBox = new Vector3(0.5, 0.5, 0.5);
                     
-                    particleSystem.minSize = 0.1;
-                    particleSystem.maxSize = 0.5;
+                    // Brighter colors
+                    particleSystem.color1 = new Color4(1, 0.7, 0.3, 1.0);
+                    particleSystem.color2 = new Color4(1, 0.1, 0, 1.0);
                     
-                    particleSystem.minLifeTime = 0.3;
-                    particleSystem.maxLifeTime = 1.5;
+                    // Larger particles
+                    particleSystem.minSize = 0.2;
+                    particleSystem.maxSize = 0.8;
                     
-                    particleSystem.emitRate = 2000;
+                    // Longer lifetime
+                    particleSystem.minLifeTime = 0.5;
+                    particleSystem.maxLifeTime = 2.0;
+                    
+                    // Higher emission rate
+                    particleSystem.emitRate = 5000;
                     
                     particleSystem.blendMode = ParticleSystem.BLENDMODE_ONEONE;
                     
-                    particleSystem.gravity = new Vector3(0, 0, 0);
+                    // Add some gravity effect
+                    particleSystem.gravity = new Vector3(0, -1, 0);
                     
-                    particleSystem.direction1 = new Vector3(-1, -1, -1);
-                    particleSystem.direction2 = new Vector3(1, 1, 1);
+                    // Wider spread
+                    particleSystem.direction1 = new Vector3(-2, -2, -2);
+                    particleSystem.direction2 = new Vector3(2, 2, 2);
                     
-                    particleSystem.minEmitPower = 1;
-                    particleSystem.maxEmitPower = 3;
+                    // More power for bigger explosion
+                    particleSystem.minEmitPower = 2;
+                    particleSystem.maxEmitPower = 5;
                     
                     particleSystem.start();
                     
