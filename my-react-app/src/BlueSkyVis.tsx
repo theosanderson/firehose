@@ -429,30 +429,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         sparkSystem.maxEmitPower = 20;
                         sparkSystem.updateSpeed = 0.01;
 
-                        // Create fragment particles
-                        const fragmentSystem = new ParticleSystem("fragments", 100, sceneRef.current!);
-                        fragmentSystem.renderingGroupId = 1;
-                        fragmentSystem.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", sceneRef.current);
-                        fragmentSystem.emitter = ship;
-                        fragmentSystem.minEmitBox = new Vector3(-0.3, -0.3, -0.3);
-                        fragmentSystem.maxEmitBox = new Vector3(0.3, 0.3, 0.3);
-                        fragmentSystem.color1 = new Color4(0.7, 0.7, 0.7, 1);
-                        fragmentSystem.color2 = new Color4(0.4, 0.4, 0.4, 1);
-                        fragmentSystem.colorDead = new Color4(0.2, 0.2, 0.2, 0);
-                        fragmentSystem.minSize = 0.3;
-                        fragmentSystem.maxSize = 0.6;
-                        fragmentSystem.minLifeTime = 1.5;
-                        fragmentSystem.maxLifeTime = 2.5;
-                        fragmentSystem.emitRate = 100;
-                        fragmentSystem.blendMode = ParticleSystem.BLENDMODE_STANDARD;
-                        fragmentSystem.gravity = new Vector3(0, -15, 0);
-                        fragmentSystem.direction1 = new Vector3(-3, 5, -3);
-                        fragmentSystem.direction2 = new Vector3(3, 5, 3);
-                        fragmentSystem.minAngularSpeed = Math.PI;
-                        fragmentSystem.maxAngularSpeed = Math.PI * 2;
-                        fragmentSystem.minEmitPower = 8;
-                        fragmentSystem.maxEmitPower = 12;
-                        fragmentSystem.updateSpeed = 0.005;
 
                         
                         // Hide ship
@@ -463,13 +439,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         // Start all particle systems
                         particleSystem.start();
                         sparkSystem.start();
-                        fragmentSystem.start();
 
                         // Cleanup all particle systems
                         setTimeout(() => {
                             particleSystem.dispose();
                             sparkSystem.dispose();
-                            fragmentSystem.dispose();
                         }, 2500);
                         
                         // Reset after explosion
