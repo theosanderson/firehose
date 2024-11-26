@@ -340,6 +340,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Update spaceship position and check collisions
         if (settingsRef.current.spaceshipEnabled && spaceshipRef.current.mesh && !spaceshipRef.current.exploding) {
             const ship = spaceshipRef.current.mesh;
+            
             const targetX = Math.max(-7, Math.min(7, spaceshipRef.current.targetX));
             const targetY = Math.max(-7, Math.min(7, spaceshipRef.current.targetY));
             
@@ -363,6 +364,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 const rotatedDx = dx * Math.cos(-messageRotationY) - dz * Math.sin(-messageRotationY);
                 const rotatedDz = dx * Math.sin(-messageRotationY) + dz * Math.cos(-messageRotationY);
                 
+                
                 // Collision box sizes
                 const shipSize = 0.4;
                 const messageHalfWidth = message.width / 2;
@@ -378,13 +380,18 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         spaceshipRef.current.exploding = true;
                         createExplosion(ship.position.clone(), sceneRef.current!);
                         
-                        // Hide ship temporarily
-                        ship.visibility = 0;
+                        // Hide ship
+                        spaceshipRef.current.allMeshes.forEach(mesh => {
+                            mesh.visibility = 0;
+                        }
+                    );
                         
                         // Reset after explosion
                         setTimeout(() => {
                             if (spaceshipRef.current.mesh) {
-                                ship.visibility = 1;
+                                spaceshipRef.current.allMeshes.forEach(mesh => {
+                                    mesh.visibility = 1;
+                                });
                                 spaceshipRef.current.exploding = false;
                                 // Reset position
                                 ship.position.x = 0;
@@ -532,6 +539,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         particleSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
         
         // Position
+        console.log(position, "BANG");
         particleSystem.emitter = position;
         particleSystem.minEmitBox = new Vector3(-0.5, -0.5, -0.5);
         particleSystem.maxEmitBox = new Vector3(0.5, 0.5, 0.5);
@@ -707,6 +715,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         container.rotation.y = Math.PI;
         
         spaceshipRef.current.mesh = container;
+        spaceshipRef.current.allMeshes = allMeshes;
     };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -743,7 +752,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             
             spaceshipRef.current.targetX = x;
             spaceshipRef.current.targetY = y;
-            console.log(x, y);
+            
         }
     };
 
