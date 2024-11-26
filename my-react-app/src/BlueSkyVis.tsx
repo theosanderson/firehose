@@ -520,8 +520,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 clientY = (e as React.MouseEvent).clientY;
             }
             
-            // Convert screen coordinates to world coordinates
-            const x = ((clientX - rect.left) / rect.width) * 14 - 7;
+            // Convert screen coordinates to world coordinates (negate x to fix mirroring)
+            const x = -(((clientX - rect.left) / rect.width) * 14 - 7);
             const y = -(((clientY - rect.top) / rect.height) * 14 - 7);
             
             spaceshipRef.current.targetX = x;
