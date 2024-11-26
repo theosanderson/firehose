@@ -329,8 +329,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         }
 
         // Update spaceship position
-        console.log("spaceship",settings.spaceshipEnabled, spaceshipRef.current.mesh);
-        if (settings.spaceshipEnabled && spaceshipRef.current.mesh) {
+        if (settingsRef.current.spaceshipEnabled && spaceshipRef.current.mesh) {
             const ship = spaceshipRef.current.mesh;
             console.log(spaceshipRef.current.targetX, spaceshipRef.current.targetY);
             const targetX = Math.max(-7, Math.min(7, spaceshipRef.current.targetX));
@@ -764,12 +763,12 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         <div style={{ marginBottom: '15px' }}>
                             <div 
                                 onClick={() => {
-                                    const newValue = !settings.spaceshipEnabled;
+                                    const newValue = !settingsRef.current.spaceshipEnabled;
+                                    settingsRef.current.spaceshipEnabled = newValue;
                                     setSettings(prev => ({
                                         ...prev,
                                         spaceshipEnabled: newValue
                                     }));
-                                    settingsRef.current.spaceshipEnabled = newValue;
                                     
                                     if (newValue && sceneRef.current) {
                                         createSpaceship(sceneRef.current);
@@ -785,7 +784,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 </label>
                                 <input
                                     type="checkbox"
-                                    checked={settings.spaceshipEnabled}
+                                    checked={settingsRef.current.spaceshipEnabled}
                                     onChange={() => {}} // Handle click on parent div instead
                                     style={{ marginRight: '8px' }}
                                 />
