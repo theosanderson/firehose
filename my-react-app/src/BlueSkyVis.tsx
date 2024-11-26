@@ -585,69 +585,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         targetY: 0
     });
 
-    const createExplosion = (position: Vector3, scene: Scene) => {
-        const particleSystem = new ParticleSystem("explosion", 2000, scene);
-        
-        particleSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
-        
-        // Position
-        console.log(position, "BANG");
-        particleSystem.emitter = position;
-        particleSystem.minEmitBox = new Vector3(-0.5, -0.5, -0.5);
-        particleSystem.maxEmitBox = new Vector3(0.5, 0.5, 0.5);
-
-        // Colors
-        particleSystem.color1 = new Color4(1, 0.5, 0, 1);
-        particleSystem.color2 = new Color4(1, 0.2, 0, 1);
-        particleSystem.colorDead = new Color4(0, 0, 0, 0);
-
-        // Size & lifetime
-        particleSystem.minSize = 0.1;
-        particleSystem.maxSize = 0.5;
-        particleSystem.minLifeTime = 0.3;
-        particleSystem.maxLifeTime = 1.5;
-
-        // Emission
-        particleSystem.emitRate = 2000;
-        particleSystem.manualEmitCount = 2000;
-        
-        // Spread & speed
-        particleSystem.minEmitPower = 1;
-        particleSystem.maxEmitPower = 3;
-        particleSystem.updateSpeed = 0.01;
-
-        // Start the particle system
-        particleSystem.start();
-
-        // Create secondary smaller particles
-        const sparkSystem = new ParticleSystem("sparks", 500, scene);
-        sparkSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
-        sparkSystem.emitter = position;
-        sparkSystem.minEmitBox = new Vector3(-0.2, -0.2, -0.2);
-        sparkSystem.maxEmitBox = new Vector3(0.2, 0.2, 0.2);
-        sparkSystem.color1 = new Color4(1, 1, 0.5, 1);
-        sparkSystem.color2 = new Color4(1, 0.5, 0.2, 1);
-        sparkSystem.colorDead = new Color4(0, 0, 0, 0);
-        sparkSystem.minSize = 0.05;
-        sparkSystem.maxSize = 0.2;
-        sparkSystem.minLifeTime = 0.5;
-        sparkSystem.maxLifeTime = 2;
-        sparkSystem.emitRate = 500;
-        sparkSystem.minEmitPower = 2;
-        sparkSystem.maxEmitPower = 4;
-        sparkSystem.updateSpeed = 0.01;
-        sparkSystem.start();
-
-        // Stop and dispose after animation
-        setTimeout(() => {
-            particleSystem.stop();
-            sparkSystem.stop();
-            setTimeout(() => {
-                particleSystem.dispose();
-                sparkSystem.dispose();
-            }, 2000);
-        }, 200);
-    };
 
     const createSpaceship = (scene: Scene) => {
         if (spaceshipRef.current.mesh) return;
