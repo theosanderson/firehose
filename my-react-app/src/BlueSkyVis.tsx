@@ -10,7 +10,9 @@ import {
     MeshBuilder,
     Material,
     ParticleSystem,
-    Texture
+    Texture,
+    PointLight,
+    HemisphericLight
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
 import { MessageObject, TextureUpdateResult, Settings } from './types';
@@ -573,17 +575,34 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             createEngine(`engine${i}`, pos)
         );
         
-        // Materials
+        // Add engine glow light
+        const engineLight = new PointLight("engineLight", new Vector3(-1.2, 0, 0), scene);
+        engineLight.diffuse = new Color3(1, 0.5, 0);
+        engineLight.intensity = 0.8;
+        engineLight.range = 2;
+        engineLight.parent = container;
+
+        // Add ambient light
+        const ambientLight = new HemisphericLight("ambientLight", new Vector3(0, 1, 0), scene);
+        ambientLight.intensity = 0.3;
+        ambientLight.groundColor = new Color3(0.2, 0.2, 0.4);
+        
+        // Materials with improved properties
         const bodyMaterial = new StandardMaterial("bodyMat", scene);
-        bodyMaterial.diffuseColor = new Color3(0.7, 0.7, 0.7);
-        bodyMaterial.specularColor = new Color3(0.2, 0.2, 0.2);
+        bodyMaterial.diffuseColor = new Color3(0.7, 0.7, 0.8);
+        bodyMaterial.specularColor = new Color3(0.9, 0.9, 1);
+        bodyMaterial.specularPower = 128;
+        bodyMaterial.metallicF0Factor = 0.9;
         
         const cockpitMaterial = new StandardMaterial("cockpitMat", scene);
         cockpitMaterial.diffuseColor = new Color3(0.2, 0.4, 0.8);
         cockpitMaterial.alpha = 0.7;
+        cockpitMaterial.specularPower = 64;
+        cockpitMaterial.environmentIntensity = 0.7;
         
         const engineMaterial = new StandardMaterial("engineMat", scene);
-        engineMaterial.emissiveColor = new Color3(0.8, 0.2, 0.2);
+        engineMaterial.emissiveColor = new Color3(0.9, 0.3, 0);
+        engineMaterial.specularColor = new Color3(1, 0.6, 0.3);
         
         // Apply materials
         body.material = bodyMaterial;
