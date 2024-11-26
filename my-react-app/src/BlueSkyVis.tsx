@@ -505,16 +505,24 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         // Update spaceship target position
         if (settings.spaceshipEnabled && canvasRef.current) {
             const rect = canvasRef.current.getBoundingClientRect();
-            const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-            const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+            let clientX: number, clientY: number;
             
-            // Convert screen coordinates to normalized -1 to 1
-            const x = ((clientX - rect.left) / rect.width) * 2 - 1;
-            const y = -((clientY - rect.top) / rect.height) * 2 + 1;
+            if ('touches' in e) {
+                // Touch event
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                // Mouse event
+                clientX = (e as React.MouseEvent).clientX;
+                clientY = (e as React.MouseEvent).clientY;
+            }
             
-            // Scale to world coordinates
-            spaceshipRef.current.targetX = x * 7;
-            spaceshipRef.current.targetY = y * 7;
+            // Convert screen coordinates to world coordinates
+            const x = ((clientX - rect.left) / rect.width) * 14 - 7;
+            const y = -(((clientY - rect.top) / rect.height) * 14 - 7);
+            
+            spaceshipRef.current.targetX = x;
+            spaceshipRef.current.targetY = y;
         }
     };
 
