@@ -381,6 +381,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         
                         // Create explosion particles
                         const particleSystem = new ParticleSystem("explosion", 2000, sceneRef.current!);
+                        particleSystem.renderingGroupId = 1;
+                        particleSystem.renderingGroupId = 1;
                         particleSystem.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", sceneRef.current);
                         particleSystem.emitter = ship;
                         particleSystem.minEmitBox = new Vector3(-0.5, -0.5, -0.5);
