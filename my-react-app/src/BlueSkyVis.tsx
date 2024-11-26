@@ -369,72 +369,19 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                     Math.abs(dy) < messageHalfHeight &&
                     Math.abs(rotatedDz) < messageDepth) {
                     
-                    // Start explosion
+                    // Turn ship red on collision
                     spaceshipRef.current.exploding = true;
-                    spaceshipRef.current.explosionTime = Date.now();
+                    const material = ship.material as StandardMaterial;
+                    material.emissiveColor = new Color3(1, 0, 0);
                     
-                    // Create particle system for explosion
-                    const particleSystem = new ParticleSystem("explosion", 10000, sceneRef.current!);
-                    particleSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACpJREFUeNpiYGBg+A/EQAxm/AdiEIYwQAJIEkwMeABRCszYBSBK8QFGgAADAGqnBwwDsb8GAAAAAElFTkSuQmCC", sceneRef.current!);
-                    
-                    // Create emitter at ship's position but ensure it's visible
-                    const emitterPosition = ship.position.clone();
-                    emitterPosition.z = Math.min(emitterPosition.z, 6); // Keep explosion visible
-                    particleSystem.emitter = emitterPosition;
-                    
-                    // Much larger emission box
-                    particleSystem.minEmitBox = new Vector3(-1, -1, -1);
-                    particleSystem.maxEmitBox = new Vector3(1, 1, 1);
-                    
-                    // Super bright colors
-                    particleSystem.color1 = new Color4(1, 0.9, 0.5, 1.0);
-                    particleSystem.color2 = new Color4(1, 0.3, 0, 1.0);
-                    
-                    // Much larger particles
-                    particleSystem.minSize = 0.4;
-                    particleSystem.maxSize = 1.2;
-                    
-                    // Even longer lifetime
-                    particleSystem.minLifeTime = 1.0;
-                    particleSystem.maxLifeTime = 3.0;
-                    
-                    // Much higher emission rate
-                    particleSystem.emitRate = 10000;
-                    
-                    particleSystem.blendMode = ParticleSystem.BLENDMODE_ADD;
-                    
-                    // Reduced gravity for more spread
-                    particleSystem.gravity = new Vector3(0, -0.5, 0);
-                    
-                    // Much wider spread
-                    particleSystem.direction1 = new Vector3(-3, -3, -3);
-                    particleSystem.direction2 = new Vector3(3, 3, 3);
-                    
-                    // Much more power for bigger explosion
-                    particleSystem.minEmitPower = 4;
-                    particleSystem.maxEmitPower = 8;
-                    
-                    // Add updateSpeed for more dynamic movement
-                    particleSystem.updateSpeed = 1/60;
-                    
-                    particleSystem.start();
-                    
-                    // Schedule cleanup
+                    // Reset after 1 second
                     setTimeout(() => {
-                        particleSystem.dispose();
                         if (spaceshipRef.current.mesh) {
-                            spaceshipRef.current.mesh.dispose();
-                            spaceshipRef.current.mesh = null;
+                            const material = spaceshipRef.current.mesh.material as StandardMaterial;
+                            material.emissiveColor = new Color3(0.2, 0.6, 1);
+                            spaceshipRef.current.exploding = false;
                         }
-                        spaceshipRef.current.exploding = false;
-                        
-                        // Recreate ship after delay
-                        setTimeout(() => {
-                            if (settingsRef.current.spaceshipEnabled) {
-                                createSpaceship(sceneRef.current!);
-                            }
-                        }, 2000);
-                    }, 1500);
+                    }, 1000);
                     
                     break;
                 }
