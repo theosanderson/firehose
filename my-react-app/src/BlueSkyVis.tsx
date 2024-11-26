@@ -379,27 +379,80 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         // Trigger explosion
                         spaceshipRef.current.exploding = true;
                         
-                        // Create explosion particles
+                        // Create main explosion particles
                         const particleSystem = new ParticleSystem("explosion", 2000, sceneRef.current!);
-                        particleSystem.renderingGroupId = 1;
                         particleSystem.renderingGroupId = 1;
                         particleSystem.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", sceneRef.current);
                         particleSystem.emitter = ship;
                         particleSystem.minEmitBox = new Vector3(-0.5, -0.5, -0.5);
                         particleSystem.maxEmitBox = new Vector3(0.5, 0.5, 0.5);
-                        particleSystem.color1 = new Color4(0.7, 0.7, 1, 1);
-                        particleSystem.color2 = new Color4(0.2, 0.5, 1, 1);
-                        particleSystem.colorDead = new Color4(0, 0, 0.2, 0);
-                        particleSystem.minSize = 0.1;
-                        particleSystem.maxSize = 0.5;
+                        particleSystem.color1 = new Color4(1, 0.5, 0, 1);
+                        particleSystem.color2 = new Color4(1, 0.2, 0, 1);
+                        particleSystem.colorDead = new Color4(0.2, 0, 0, 0);
+                        particleSystem.minSize = 0.2;
+                        particleSystem.maxSize = 0.8;
                         particleSystem.minLifeTime = 0.3;
-                        particleSystem.maxLifeTime = 1;
-                        particleSystem.emitRate = 1000;
+                        particleSystem.maxLifeTime = 1.5;
+                        particleSystem.emitRate = 2000;
                         particleSystem.blendMode = ParticleSystem.BLENDMODE_ONEONE;
-                        particleSystem.gravity = new Vector3(0, -9.81, 0);
-                        particleSystem.direction1 = new Vector3(-2, 8, -2);
-                        particleSystem.direction2 = new Vector3(2, 8, 2);
+                        particleSystem.gravity = new Vector3(0, -5, 0);
+                        particleSystem.direction1 = new Vector3(-4, 8, -4);
+                        particleSystem.direction2 = new Vector3(4, 8, 4);
                         particleSystem.minAngularSpeed = 0;
+                        particleSystem.maxAngularSpeed = Math.PI * 2;
+                        particleSystem.minEmitPower = 5;
+                        particleSystem.maxEmitPower = 10;
+                        particleSystem.updateSpeed = 0.02;
+
+                        // Create spark particles
+                        const sparkSystem = new ParticleSystem("sparks", 500, sceneRef.current!);
+                        sparkSystem.renderingGroupId = 1;
+                        sparkSystem.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", sceneRef.current);
+                        sparkSystem.emitter = ship;
+                        sparkSystem.minEmitBox = new Vector3(-0.2, -0.2, -0.2);
+                        sparkSystem.maxEmitBox = new Vector3(0.2, 0.2, 0.2);
+                        sparkSystem.color1 = new Color4(1, 0.9, 0.5, 1);
+                        sparkSystem.color2 = new Color4(1, 0.8, 0, 1);
+                        sparkSystem.colorDead = new Color4(1, 0.3, 0, 0);
+                        sparkSystem.minSize = 0.05;
+                        sparkSystem.maxSize = 0.2;
+                        sparkSystem.minLifeTime = 1;
+                        sparkSystem.maxLifeTime = 2;
+                        sparkSystem.emitRate = 300;
+                        sparkSystem.blendMode = ParticleSystem.BLENDMODE_ONEONE;
+                        sparkSystem.gravity = new Vector3(0, -2, 0);
+                        sparkSystem.direction1 = new Vector3(-8, 8, -8);
+                        sparkSystem.direction2 = new Vector3(8, 8, 8);
+                        sparkSystem.minAngularSpeed = Math.PI;
+                        sparkSystem.maxAngularSpeed = Math.PI * 4;
+                        sparkSystem.minEmitPower = 10;
+                        sparkSystem.maxEmitPower = 20;
+                        sparkSystem.updateSpeed = 0.01;
+
+                        // Create fragment particles
+                        const fragmentSystem = new ParticleSystem("fragments", 100, sceneRef.current!);
+                        fragmentSystem.renderingGroupId = 1;
+                        fragmentSystem.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", sceneRef.current);
+                        fragmentSystem.emitter = ship;
+                        fragmentSystem.minEmitBox = new Vector3(-0.3, -0.3, -0.3);
+                        fragmentSystem.maxEmitBox = new Vector3(0.3, 0.3, 0.3);
+                        fragmentSystem.color1 = new Color4(0.7, 0.7, 0.7, 1);
+                        fragmentSystem.color2 = new Color4(0.4, 0.4, 0.4, 1);
+                        fragmentSystem.colorDead = new Color4(0.2, 0.2, 0.2, 0);
+                        fragmentSystem.minSize = 0.3;
+                        fragmentSystem.maxSize = 0.6;
+                        fragmentSystem.minLifeTime = 1.5;
+                        fragmentSystem.maxLifeTime = 2.5;
+                        fragmentSystem.emitRate = 100;
+                        fragmentSystem.blendMode = ParticleSystem.BLENDMODE_STANDARD;
+                        fragmentSystem.gravity = new Vector3(0, -15, 0);
+                        fragmentSystem.direction1 = new Vector3(-3, 5, -3);
+                        fragmentSystem.direction2 = new Vector3(3, 5, 3);
+                        fragmentSystem.minAngularSpeed = Math.PI;
+                        fragmentSystem.maxAngularSpeed = Math.PI * 2;
+                        fragmentSystem.minEmitPower = 8;
+                        fragmentSystem.maxEmitPower = 12;
+                        fragmentSystem.updateSpeed = 0.005;
 
                         
                         // Hide ship
