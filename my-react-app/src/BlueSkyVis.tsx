@@ -529,7 +529,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const createExplosion = (position: Vector3, scene: Scene) => {
         const particleSystem = new ParticleSystem("explosion", 2000, scene);
         
-        particleSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACdJREFUeNpiYGBg+A/EQGxmogQDMDGMB6cwYJUAOpsBm1MZGBgAAgwAGGMBzABqzwIAAAAASUVORK5CYII=");
+        particleSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
         
         // Position
         particleSystem.emitter = position;
@@ -561,7 +561,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
 
         // Create secondary smaller particles
         const sparkSystem = new ParticleSystem("sparks", 500, scene);
-        sparkSystem.particleTexture = particleSystem.particleTexture;
+        sparkSystem.particleTexture = new Texture("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
         sparkSystem.emitter = position;
         sparkSystem.minEmitBox = new Vector3(-0.2, -0.2, -0.2);
         sparkSystem.maxEmitBox = new Vector3(0.2, 0.2, 0.2);
