@@ -517,21 +517,104 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const createSpaceship = (scene: Scene) => {
         if (spaceshipRef.current.mesh) return;
         
-        const ship = MeshBuilder.CreateCylinder("spaceship", {
-            height: 0.5,
-            diameter: 0.8,
-            tessellation: 8
+        // Main body
+        const body = MeshBuilder.CreateBox("body", {
+            height: 0.3,
+            width: 2,
+            depth: 0.4
         }, scene);
         
-        const material = new StandardMaterial("shipMat", scene);
-        material.emissiveColor = new Color3(0.2, 0.6, 1);
-        material.specularColor = new Color3(0.2, 0.6, 1);
-        ship.material = material;
+        // Cockpit
+        const cockpit = MeshBuilder.CreateSphere("cockpit", {
+            diameter: 0.3,
+            segments: 8
+        }, scene);
+        cockpit.scaling = new Vector3(1, 0.8, 1.2);
+        cockpit.position = new Vector3(0.5, 0.15, 0);
         
-        ship.position = new Vector3(0, 0, 5);
-        ship.rotation.x = Math.PI / 2;
+        // Create wings
+        const createWing = (name: string, position: Vector3, rotation: number) => {
+            const wing = MeshBuilder.CreateBox(name, {
+                height: 0.05,
+                width: 1.2,
+                depth: 0.4
+            }, scene);
+            wing.position = position;
+            wing.rotation.z = rotation;
+            return wing;
+        };
         
-        spaceshipRef.current.mesh = ship;
+        // Four wings
+        const topLeftWing = createWing("topLeftWing", new Vector3(-0.3, 0.3, 0), Math.PI / 6);
+        const topRightWing = createWing("topRightWing", new Vector3(-0.3, -0.3, 0), -Math.PI / 6);
+        const bottomLeftWing = createWing("bottomLeftWing", new Vector3(-0.3, 0.3, 0), -Math.PI / 6);
+        const bottomRightWing = createWing("bottomRightWing", new Vector3(-0.3, -0.3, 0), Math.PI / 6);
+        
+        // Engines (four cylinders)
+        const createEngine = (name: string, position: Vector3) => {
+            const engine = MeshBuilder.CreateCylinder(name, {
+                height: 0.4,
+                diameter: 0.15,
+                tessellation: 12
+            }, scene);
+            engine.position = position;
+            engine.rotation.x = Math.PI / 2;
+            return engine;
+        };
+        
+        const enginePositions = [
+            new Vector3(-0.8, 0.4, 0),
+            new Vector3(-0.8, -0.4, 0),
+            new Vector3(-0.8, 0.4, 0),
+            new Vector3(-0.8, -0.4, 0)
+        ];
+        
+        const engines = enginePositions.map((pos, i) => 
+            createEngine(`engine${i}`, pos)
+        );
+        
+        // Materials
+        const bodyMaterial = new StandardMaterial("bodyMat", scene);
+        bodyMaterial.diffuseColor = new Color3(0.7, 0.7, 0.7);
+        bodyMaterial.specularColor = new Color3(0.2, 0.2, 0.2);
+        
+        const cockpitMaterial = new StandardMaterial("cockpitMat", scene);
+        cockpitMaterial.diffuseColor = new Color3(0.2, 0.4, 0.8);
+        cockpitMaterial.alpha = 0.7;
+        
+        const engineMaterial = new StandardMaterial("engineMat", scene);
+        engineMaterial.emissiveColor = new Color3(0.8, 0.2, 0.2);
+        
+        // Apply materials
+        body.material = bodyMaterial;
+        cockpit.material = cockpitMaterial;
+        [topLeftWing, topRightWing, bottomLeftWing, bottomRightWing].forEach(wing => {
+            wing.material = bodyMaterial;
+        });
+        engines.forEach(engine => {
+            engine.material = engineMaterial;
+        });
+        
+        // Create a container mesh to group everything
+        const container = MeshBuilder.CreateBox("container", {
+            height: 0.1,
+            width: 0.1,
+            depth: 0.1
+        }, scene);
+        container.visibility = 0;
+        
+        // Parent all meshes to the container
+        const allMeshes = [body, cockpit, topLeftWing, topRightWing, 
+                          bottomLeftWing, bottomRightWing, ...engines];
+        allMeshes.forEach(mesh => {
+            mesh.parent = container;
+        });
+        
+        // Position the entire ship
+        container.position = new Vector3(0, 0, 5);
+        container.rotation.y = Math.PI;
+        
+        spaceshipRef.current.mesh = container;
     };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
