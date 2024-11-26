@@ -14,7 +14,11 @@ import {
     PointLight,
     HemisphericLight,
     GPUParticleSystem,
-    Quaternion
+    Quaternion,
+    Mesh,
+    CubeTexture,
+    PBRMetallicRoughnessMaterial,
+    TransformNode
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
 import { MessageObject, TextureUpdateResult, Settings } from './types';
@@ -472,6 +476,13 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     };
 
     useEffect(() => {
+        // setTimeout to enable spaceship
+        setTimeout(() => {
+            createSpaceship(sceneRef.current);
+            settingsRef.current.spaceshipEnabled = true;
+            setSettings({ ...settingsRef.current });
+
+        }, 500);
         if (!canvasRef.current) return;
 
         // Initialize engine and scene
@@ -582,7 +593,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         baseSpeed: 1.0,
         audioMultiplier: 1.0,
         specialFrequency: 0.04,
-        audioEnabled: false
+        audioEnabled: false,
+        spaceshipEnabled: false
     });
     const analyserRef = useRef<AnalyserNode | null>(null);
     const audioDataRef = useRef<Uint8Array | null>(null);
@@ -593,127 +605,175 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         targetY: 0
     });
 
-
     const createSpaceship = (scene: Scene) => {
         if (spaceshipRef.current.mesh) return;
-        
-        // Main body
-        const body = MeshBuilder.CreateBox("body", {
-            height: 0.3,
-            width: 2,
-            depth: 0.4
-        }, scene);
-        
-        // Cockpit
-        const cockpit = MeshBuilder.CreateSphere("cockpit", {
-            diameter: 0.3,
-            segments: 8
-        }, scene);
-        cockpit.scaling = new Vector3(1, 0.8, 1.2);
-        cockpit.position = new Vector3(0.5, 0.15, 0);
-        
-        // Create wings
-        const createWing = (name: string, position: Vector3, rotation: number) => {
-            const wing = MeshBuilder.CreateBox(name, {
-                height: 0.05,
-                width: 1.2,
-                depth: 0.4
-            }, scene);
-            wing.position = position;
-            wing.rotation.z = rotation;
+    
+        // Load an environment texture for PBR materials
+        const hdrTexture = CubeTexture.CreateFromPrefilteredData(
+            "https://playground.babylonjs.com/textures/environment.dds",
+            scene
+        );
+        scene.environmentTexture = hdrTexture;
+        scene.createDefaultSkybox(hdrTexture, true, 1000);
+    
+        // Main body - cylindrical shape pointing towards -Z
+        const body = MeshBuilder.CreateCylinder(
+            "body",
+            {
+                height: 2, // Length along Z-axis
+                diameter: 0.6, // Width along X-axis
+                tessellation: 24,
+            },
+            scene
+        );
+        body.rotation.x = Math.PI / 2; // Align cylinder along Z-axis
+        body.position.z = 0; // Center the body
+    
+        // Cockpit - at the front
+        const cockpit = MeshBuilder.CreateSphere(
+            "cockpit",
+            {
+                diameter: 0.4,
+                segments: 16,
+            },
+            scene
+        );
+        cockpit.scaling = new Vector3(0.6, 0.6, 1);
+        cockpit.position = new Vector3(0, 0, -1); // Positioned at the front along -Z
+    
+        // Nose cone - added at the very front
+        const noseCone = MeshBuilder.CreateCylinder(
+            "noseCone",
+            {
+                height: 0.5,
+                diameterTop: 0,
+                diameterBottom: 0.5,
+                tessellation: 24,
+            },
+            scene
+        );
+        noseCone.rotation.x = -Math.PI / 2; // Align along Z-axis
+        noseCone.position.z = -1.3; // Positioned at the very front
+    
+        // Create wings - swept back
+        const createWing = (name: string, isUpper: boolean, isLeft: boolean) => {
+            const wing = MeshBuilder.CreateBox(
+                name,
+                {
+                    height: 0.05, // Thickness of the wing
+                    width: 1.2, // Wing length along X-axis
+                    depth: 0.4, // Wing width along Z-axis
+                },
+                scene
+            );
+    
+            // Position the wing
+            wing.position.x = isLeft ? 0.75 : -0.75;
+            wing.position.y = isUpper ? 0.5 : -0.5;
+            wing.position.z = 0.4; // Slightly towards the back
+    
+           
+    
+            // Rotate the wing to form an X shape
+            const angle = (isUpper ? 1 : -1) * (isLeft ? 1 : -1) * (Math.PI / 6);
+            wing.rotation.z = angle;
+    
             return wing;
         };
-        
-        // Four wings
-        const topLeftWing = createWing("topLeftWing", new Vector3(-0.3, 0.3, 0), Math.PI / 6);
-        const topRightWing = createWing("topRightWing", new Vector3(-0.3, -0.3, 0), -Math.PI / 6);
-        const bottomLeftWing = createWing("bottomLeftWing", new Vector3(-0.3, 0.3, 0), -Math.PI / 6);
-        const bottomRightWing = createWing("bottomRightWing", new Vector3(-0.3, -0.3, 0), Math.PI / 6);
-        
-        // Engines (four cylinders)
-        const createEngine = (name: string, position: Vector3) => {
-            const engine = MeshBuilder.CreateCylinder(name, {
-                height: 0.4,
-                diameter: 0.15,
-                tessellation: 12
-            }, scene);
-            engine.position = position;
-            engine.rotation.x = Math.PI / 2;
-            return engine;
-        };
-        
-        const enginePositions = [
-            new Vector3(-0.8, 0.4, 0),
-            new Vector3(-0.8, -0.4, 0),
-            new Vector3(-0.8, 0.4, 0),
-            new Vector3(-0.8, -0.4, 0)
-        ];
-        
-        const engines = enginePositions.map((pos, i) => 
-            createEngine(`engine${i}`, pos)
+    
+        // Create four wings
+        const upperLeftWing = createWing("upperLeftWing", true, true);
+        const upperRightWing = createWing("upperRightWing", true, false);
+        const lowerLeftWing = createWing("lowerLeftWing", false, true);
+        const lowerRightWing = createWing("lowerRightWing", false, false);
+    
+        // Create a single engine at the back of the ship
+        const engine = MeshBuilder.CreateCylinder(
+            "engine",
+            {
+                height: 0.6,
+                diameterTop: 0.3,
+                diameterBottom: 0.5,
+                tessellation: 16,
+            },
+            scene
         );
-        
-        // Materials with improved properties
-        const bodyMaterial = new StandardMaterial("bodyMat", scene);
-        bodyMaterial.diffuseColor = new Color3(0.7, 0.7, 0.8);
-        bodyMaterial.specularColor = new Color3(0.9, 0.9, 1);
-        bodyMaterial.specularPower = 128;
-        bodyMaterial.metallicF0Factor = 0.9;
-        
-        const cockpitMaterial = new StandardMaterial("cockpitMat", scene);
-        cockpitMaterial.diffuseColor = new Color3(0.2, 0.4, 0.8);
-        cockpitMaterial.alpha = 0.7;
-        cockpitMaterial.specularPower = 64;
-        cockpitMaterial.environmentIntensity = 0.7;
-        
+        engine.rotation.x = Math.PI / 2; // Align along Z-axis
+        engine.position.z = 1.2; // Position at the back end of the body
+    
+        // PBR Materials
+        const bodyMaterial = new PBRMetallicRoughnessMaterial("bodyMat", scene);
+        bodyMaterial.baseColor = new Color3(0.5, 0.5, 0.5);
+        bodyMaterial.metallic = 0.0; // Non-metallic
+        bodyMaterial.roughness = 1; // Slightly rough surface
+    
+        const cockpitMaterial = new PBRMetallicRoughnessMaterial("cockpitMat", scene);
+        cockpitMaterial.baseColor = new Color3(0.2, 0.4, 0.6);
+        cockpitMaterial.metallic = 0.0;
+        cockpitMaterial.roughness = 0.1; // Smooth surface
+        cockpitMaterial.alpha = 0.9; // Slight transparency
+    
+        const noseConeMaterial = new PBRMetallicRoughnessMaterial("noseConeMat", scene);
+        noseConeMaterial.baseColor = new Color3(0.5, 0.5, 0.5);
+        noseConeMaterial.metallic = 0.0;
+        noseConeMaterial.roughness = 0.7;
+    
         const engineMaterial = new StandardMaterial("engineMat", scene);
-        engineMaterial.emissiveColor = new Color3(0.9, 0.3, 0);
-        engineMaterial.specularColor = new Color3(1, 0.6, 0.3);
-        
+        engineMaterial.diffuseColor = new Color3(0.7, 0.7, 0.7);
+        engineMaterial.specularColor = new Color3(0.2, 0.2, 0.2);
+        engineMaterial.emissiveColor = new Color3(0.9, 0.5, 0.1); // Slight glow
+    
         // Apply materials
         body.material = bodyMaterial;
         cockpit.material = cockpitMaterial;
-        [topLeftWing, topRightWing, bottomLeftWing, bottomRightWing].forEach(wing => {
+        noseCone.material = noseConeMaterial;
+        [upperLeftWing, upperRightWing, lowerLeftWing, lowerRightWing].forEach((wing) => {
             wing.material = bodyMaterial;
         });
-        engines.forEach(engine => {
-            engine.material = engineMaterial;
-        });
-        
-        // Create a container mesh to group everything
-        const container = MeshBuilder.CreateBox("container", {
-            height: 0.1,
-            width: 0.1,
-            depth: 0.1
-        }, scene);
-        container.visibility = 0;
-        
-        // Parent all meshes to the container
-        const allMeshes = [body, cockpit, topLeftWing, topRightWing, 
-                          bottomLeftWing, bottomRightWing, ...engines];
-        allMeshes.forEach(mesh => {
+        engine.material = engineMaterial;
+    
+        // Create container
+        const container = new TransformNode("container", scene);
+    
+        // Parent all meshes to container
+        const allMeshes = [
+            body,
+            cockpit,
+            noseCone,
+            upperLeftWing,
+            upperRightWing,
+            lowerLeftWing,
+            lowerRightWing,
+            engine,
+        ];
+        allMeshes.forEach((mesh) => {
             mesh.parent = container;
         });
-
-        // Add engine glow light
-        const engineLight = new PointLight("engineLight", new Vector3(-1.2, 0, 0), scene);
+    
+        // Add engine light
+        const engineLight = new PointLight("engineLight", new Vector3(0, 0, 1.5), scene);
         engineLight.diffuse = new Color3(1, 0.5, 0);
-        engineLight.intensity = 0.8;
-        engineLight.range = 2;
-        engineLight.parent = container;
-
-        // Add ambient light
-        const ambientLight = new HemisphericLight("ambientLight", new Vector3(0, 1, 0), scene);
-        ambientLight.intensity = 0.3;
+        engineLight.intensity = 0.7;
+        engineLight.range = 3;
+        engineLight.parent = engine; // Parent to the engine
+    
+        // Ambient light (increased intensity)
+        const ambientLight = new HemisphericLight(
+            "ambientLight",
+            new Vector3(0, 1, 0),
+            scene
+        );
+        ambientLight.intensity = 0.8;
         ambientLight.groundColor = new Color3(0.2, 0.2, 0.4);
-        
-        // Position the entire ship
+    
+        // Position the ship
         container.position = new Vector3(0, 0, 5);
-        container.rotation.y = Math.PI;
-        
+    
         spaceshipRef.current.mesh = container;
         spaceshipRef.current.allMeshes = allMeshes;
     };
+    
+    
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
         setIsMouseActive(true);
