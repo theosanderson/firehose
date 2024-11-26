@@ -689,19 +689,29 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         const lowerLeftWing = createWing("lowerLeftWing", false, true);
         const lowerRightWing = createWing("lowerRightWing", false, false);
     
-        // Create a single engine at the back of the ship
-        const engine = MeshBuilder.CreateCylinder(
-            "engine",
-            {
-                height: 0.6,
-                diameterTop: 0.3,
-                diameterBottom: 0.5,
-                tessellation: 16,
-            },
-            scene
-        );
-        engine.rotation.x = Math.PI / 2; // Align along Z-axis
-        engine.position.z = 1.2; // Position at the back end of the body
+        // Create engine particle system
+        const engineParticles = new ParticleSystem("engineParticles", 2000, scene);
+        engineParticles.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", scene);
+        engineParticles.emitter = new Vector3(0, 0, 1.2); // Position at back of ship
+        engineParticles.minEmitBox = new Vector3(-0.2, -0.2, 0);
+        engineParticles.maxEmitBox = new Vector3(0.2, 0.2, 0);
+        engineParticles.color1 = new Color4(1, 0.5, 0, 1);
+        engineParticles.color2 = new Color4(1, 0.2, 0, 1);
+        engineParticles.colorDead = new Color4(0, 0, 0, 0);
+        engineParticles.minSize = 0.1;
+        engineParticles.maxSize = 0.3;
+        engineParticles.minLifeTime = 0.1;
+        engineParticles.maxLifeTime = 0.3;
+        engineParticles.emitRate = 500;
+        engineParticles.blendMode = ParticleSystem.BLENDMODE_ONEONE;
+        engineParticles.gravity = new Vector3(0, 0, 2);
+        engineParticles.direction1 = new Vector3(0, 0, 1);
+        engineParticles.direction2 = new Vector3(0, 0, 1);
+        engineParticles.minEmitPower = 1;
+        engineParticles.maxEmitPower = 2;
+        engineParticles.updateSpeed = 0.01;
+        engineParticles.parent = container;
+        engineParticles.start();
     
         // PBR Materials
         const bodyMaterial = new PBRMetallicRoughnessMaterial("bodyMat", scene);
@@ -720,10 +730,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         noseConeMaterial.metallic = 0.0;
         noseConeMaterial.roughness = 0.7;
     
-        const engineMaterial = new StandardMaterial("engineMat", scene);
-        engineMaterial.diffuseColor = new Color3(0.7, 0.7, 0.7);
-        engineMaterial.specularColor = new Color3(0.2, 0.2, 0.2);
-        engineMaterial.emissiveColor = new Color3(0.9, 0.5, 0.1); // Slight glow
     
         // Apply materials
         body.material = bodyMaterial;
@@ -746,7 +752,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             upperRightWing,
             lowerLeftWing,
             lowerRightWing,
-            engine,
         ];
         allMeshes.forEach((mesh) => {
             mesh.parent = container;
@@ -757,7 +762,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         engineLight.diffuse = new Color3(1, 0.5, 0);
         engineLight.intensity = 0.7;
         engineLight.range = 3;
-        engineLight.parent = engine; // Parent to the engine
+        engineLight.parent = container; // Parent to the container
+        engineLight.position = new Vector3(0, 0, 1.2); // Position at the engine location
     
         // Ambient light (increased intensity)
         const ambientLight = new HemisphericLight(
