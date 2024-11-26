@@ -689,30 +689,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         const lowerLeftWing = createWing("lowerLeftWing", false, true);
         const lowerRightWing = createWing("lowerRightWing", false, false);
     
-        // Create engine particle system
-        const engineParticles = new ParticleSystem("engineParticles", 2000, scene);
-        engineParticles.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", scene);
-        engineParticles.emitter = new Vector3(0, 0, 1.2); // Position at back of ship
-        engineParticles.minEmitBox = new Vector3(-0.2, -0.2, 0);
-        engineParticles.maxEmitBox = new Vector3(0.2, 0.2, 0);
-        engineParticles.color1 = new Color4(1, 0.5, 0, 1);
-        engineParticles.color2 = new Color4(1, 0.2, 0, 1);
-        engineParticles.colorDead = new Color4(0, 0, 0, 0);
-        engineParticles.minSize = 0.1;
-        engineParticles.maxSize = 0.3;
-        engineParticles.minLifeTime = 0.1;
-        engineParticles.maxLifeTime = 0.3;
-        engineParticles.emitRate = 500;
-        engineParticles.blendMode = ParticleSystem.BLENDMODE_ONEONE;
-        engineParticles.gravity = new Vector3(0, 0, 2);
-        engineParticles.direction1 = new Vector3(0, 0, 1);
-        engineParticles.direction2 = new Vector3(0, 0, 1);
-        engineParticles.minEmitPower = 1;
-        engineParticles.maxEmitPower = 2;
-        engineParticles.updateSpeed = 0.01;
-        engineParticles.parent = container;
-        engineParticles.start();
-    
         // PBR Materials
         const bodyMaterial = new PBRMetallicRoughnessMaterial("bodyMat", scene);
         bodyMaterial.baseColor = new Color3(0.5, 0.5, 0.5);
@@ -738,7 +714,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         [upperLeftWing, upperRightWing, lowerLeftWing, lowerRightWing].forEach((wing) => {
             wing.material = bodyMaterial;
         });
-        engine.material = engineMaterial;
     
         // Create container
         const container = new TransformNode("container", scene);
@@ -776,6 +751,30 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     
         // Position the ship
         container.position = new Vector3(0, 0, 5);
+
+        // Create engine particle system
+        const engineParticles = new ParticleSystem("engineParticles", 2000, scene);
+        engineParticles.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", scene);
+        engineParticles.emitter = new Vector3(0, 0, 1.2); // Position at back of ship
+        engineParticles.minEmitBox = new Vector3(-0.2, -0.2, 0);
+        engineParticles.maxEmitBox = new Vector3(0.2, 0.2, 0);
+        engineParticles.color1 = new Color4(1, 0.5, 0, 1);
+        engineParticles.color2 = new Color4(1, 0.2, 0, 1);
+        engineParticles.colorDead = new Color4(0, 0, 0, 0);
+        engineParticles.minSize = 0.1;
+        engineParticles.maxSize = 0.3;
+        engineParticles.minLifeTime = 0.1;
+        engineParticles.maxLifeTime = 0.3;
+        engineParticles.emitRate = 500;
+        engineParticles.blendMode = ParticleSystem.BLENDMODE_ONEONE;
+        engineParticles.gravity = new Vector3(0, 0, 2);
+        engineParticles.direction1 = new Vector3(0, 0, 1);
+        engineParticles.direction2 = new Vector3(0, 0, 1);
+        engineParticles.minEmitPower = 1;
+        engineParticles.maxEmitPower = 2;
+        engineParticles.updateSpeed = 0.01;
+        engineParticles.parent = container;
+        engineParticles.start();
     
         spaceshipRef.current.mesh = container as unknown as Mesh;
         spaceshipRef.current.allMeshes = allMeshes;
