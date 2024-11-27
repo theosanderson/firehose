@@ -924,8 +924,12 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 textAlign: 'right'
             }}>
                 <span style={{fontSize: '18px'}}>SCORE: {score}</span>
-                <br />
-                <span style={{fontSize: '18px'}}>TOP SCORE: {maxScore}</span>
+                {maxScore > score && (
+                    <>
+                        <br />
+                        <span style={{fontSize: '18px'}}>TOP SCORE: {maxScore}</span>
+                    </>
+                )}
             </div>
             <div style={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '10px' }}>
                 <div
