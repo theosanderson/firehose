@@ -906,11 +906,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 fontSize: '24px',
                 fontFamily: 'sans-serif',
                 padding: '10px',
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)', 
                 borderRadius: '8px',
                 opacity: isMouseActive ? 0.7 : 0
             }}>
-                Score: {score}
+                Score: {score} | Speed: {settings.baseSpeed.toFixed(1)}x
             </div>
             <div style={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '10px' }}>
                 <div
