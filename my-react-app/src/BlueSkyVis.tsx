@@ -557,8 +557,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         if (textWrapperRef.current && sceneRef.current && texturePoolRef.current) {
             
             const lines = [
-                "< CONNECTING TO LIVE",
-                " BLUESKY FIREHOSE >"
+                " ",
+                " "
             ]
             const textureObj = texturePoolRef.current.acquire(lines.length);
             
