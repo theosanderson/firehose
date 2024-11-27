@@ -488,6 +488,16 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 spaceshipRef.current.targetX = 0;
                                 spaceshipRef.current.targetY = 0;
                                 
+                                // Reset score and speed
+                                scoreRef.current = 0;
+                                setScore(0);
+                                const defaultSpeed = 1.0;
+                                settingsRef.current.baseSpeed = defaultSpeed;
+                                setSettings(prev => ({
+                                    ...prev,
+                                    baseSpeed: defaultSpeed
+                                }));
+                                
                                 // Restart engine particles
                                 const engineParticles = sceneRef.current.getParticleSystemByID("engineParticles");
                                 if (engineParticles) {
