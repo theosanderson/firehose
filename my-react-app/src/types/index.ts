@@ -17,6 +17,8 @@ export interface MessageObject {
     special: boolean;
     arbitraryOrder: number;
     createdAt?: number;
+    width: number;
+    height: number;
 }
 
 export interface Settings {
@@ -25,4 +27,14 @@ export interface Settings {
     audioMultiplier: number;
     specialFrequency: number;
     audioEnabled: boolean;
+    spaceshipEnabled: boolean;
+}
+
+export interface SpaceshipState {
+    allMeshes?: Mesh[];
+    mesh: Mesh | null;
+    targetX: number;
+    targetY: number;
+    exploding: boolean;
+    explosionTime?: number;
 }

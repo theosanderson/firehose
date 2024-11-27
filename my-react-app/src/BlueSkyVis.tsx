@@ -8,10 +8,18 @@ import {
     UniversalCamera,
     StandardMaterial,
     MeshBuilder,
-    Material
+    Material,
+    ParticleSystem,
+    Texture,
+    PointLight,
+    HemisphericLight,
+    Mesh,
+    CubeTexture,
+    PBRMetallicRoughnessMaterial,
+    TransformNode
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
-import { MessageObject, TextureUpdateResult, Settings } from './types';
+import { MessageObject, TextureUpdateResult, Settings, SpaceshipState } from './types';
 
 const fontSize = 32;
 const lineHeight = fontSize * 1.1;
@@ -225,10 +233,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         const textureObj = texturePoolRef.current.acquire(lines.length);
         const { lineCount } = updateTextTexture(textureObj, lines, wall === -1);
         
-        const height = lineCount * 0.75;
+        const planeHeight = lineCount * 0.75;
+        const planeWidth = 7;
         const plane = MeshBuilder.CreatePlane("message", {
-            width: 7,
-            height
+            width: planeWidth,
+            height: planeHeight
         }, sceneRef.current);
 
         const material = new StandardMaterial("messageMat", sceneRef.current);
@@ -264,7 +273,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             textureObj,
             speed: wall === -1 ? 0.005 + 0.5 * (0.08 + Math.random() * 0.12) : 0.05 + Math.random() * 0.005,
             special: wall === -1,
-            arbitraryOrder
+            arbitraryOrder,
+            width: planeWidth,
+            height: planeHeight
         });
     };
 
@@ -328,11 +339,167 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         }
 
+        // Update spaceship position and check collisions
+        if (settingsRef.current.spaceshipEnabled && spaceshipRef.current.mesh && !spaceshipRef.current.exploding) {
+            const ship = spaceshipRef.current.mesh;
+            
+            const targetX = Math.max(-7, Math.min(7, spaceshipRef.current.targetX));
+            const targetY = Math.max(-7, Math.min(7, spaceshipRef.current.targetY));
+            
+            // Smooth interpolation
+            ship.position.x += (targetX - ship.position.x) * 0.1;
+            ship.position.y += (targetY - ship.position.y) * 0.1;
+            
+            // Add slight rotation based on movement
+            ship.rotation.z = (targetX - ship.position.x) * 0.2;
+            ship.rotation.y = (targetY - ship.position.y) * 0.2;
+
+            // Check for collisions with messages
+            for (const message of messageObjectsRef.current) {
+                // Account for message rotation when checking collisions
+                const messageRotationY = message.mesh.rotation.y;
+                const dx = ship.position.x - message.mesh.position.x;
+                const dy = ship.position.y - message.mesh.position.y;
+                const dz = ship.position.z - message.mesh.position.z;
+                
+                // Transform ship position relative to message orientation
+                const rotatedDx = dx * Math.cos(-messageRotationY) - dz * Math.sin(-messageRotationY);
+                const rotatedDz = dx * Math.sin(-messageRotationY) + dz * Math.cos(-messageRotationY);
+                
+                
+                // Collision box sizes
+                const messageHalfWidth = message.width / 2;
+                const messageHalfHeight = message.height / 2;
+                const messageDepth = 0.1; // Thickness of message plane
+                
+                if (Math.abs(rotatedDx) < messageHalfWidth &&
+                    Math.abs(dy) < messageHalfHeight &&
+                    Math.abs(rotatedDz) < messageDepth) {
+                    
+                    if (!spaceshipRef.current.exploding) {
+                        // Trigger explosion
+                        spaceshipRef.current.exploding = true;
+                        
+                        // Create main explosion particles
+                        const particleSystem = new ParticleSystem("explosion", 2000, sceneRef.current!);
+                        particleSystem.renderingGroupId = 1;
+                        particleSystem.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", sceneRef.current);
+                        particleSystem.emitter = ship;
+                        particleSystem.minEmitBox = new Vector3(-0.5, -0.5, -0.5);
+                        particleSystem.maxEmitBox = new Vector3(0.5, 0.5, 0.5);
+                        particleSystem.color1 = new Color4(1, 0.5, 0, 1);
+                        particleSystem.color2 = new Color4(1, 0.2, 0, 1);
+                        particleSystem.colorDead = new Color4(0.2, 0, 0, 0);
+                        particleSystem.minSize = 0.2;
+                        particleSystem.maxSize = 0.8;
+                        particleSystem.minLifeTime = 0.3;
+                        particleSystem.maxLifeTime = 1.5;
+                        particleSystem.emitRate = 2000;
+                        particleSystem.blendMode = ParticleSystem.BLENDMODE_ONEONE;
+                        particleSystem.gravity = new Vector3(0, -5, 0);
+                        particleSystem.direction1 = new Vector3(-4, 8, -4);
+                        particleSystem.direction2 = new Vector3(4, 8, 4);
+                        particleSystem.minAngularSpeed = 0;
+                        particleSystem.maxAngularSpeed = Math.PI * 2;
+                        particleSystem.minEmitPower = 5;
+                        particleSystem.maxEmitPower = 10;
+                        particleSystem.updateSpeed = 0.02;
+
+                        // Create spark particles
+                        const sparkSystem = new ParticleSystem("sparks", 500, sceneRef.current!);
+                        sparkSystem.renderingGroupId = 1;
+                        sparkSystem.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", sceneRef.current);
+                        sparkSystem.emitter = ship;
+                        sparkSystem.minEmitBox = new Vector3(-0.2, -0.2, -0.2);
+                        sparkSystem.maxEmitBox = new Vector3(0.2, 0.2, 0.2);
+                        sparkSystem.color1 = new Color4(1, 0.9, 0.5, 1);
+                        sparkSystem.color2 = new Color4(1, 0.8, 0, 1);
+                        sparkSystem.colorDead = new Color4(1, 0.3, 0, 0);
+                        sparkSystem.minSize = 0.05;
+                        sparkSystem.maxSize = 0.2;
+                        sparkSystem.minLifeTime = 1;
+                        sparkSystem.maxLifeTime = 2;
+                        sparkSystem.emitRate = 300;
+                        sparkSystem.blendMode = ParticleSystem.BLENDMODE_ONEONE;
+                        sparkSystem.gravity = new Vector3(0, -2, 0);
+                        sparkSystem.direction1 = new Vector3(-8, 8, -8);
+                        sparkSystem.direction2 = new Vector3(8, 8, 8);
+                        sparkSystem.minAngularSpeed = Math.PI;
+                        sparkSystem.maxAngularSpeed = Math.PI * 4;
+                        sparkSystem.minEmitPower = 10;
+                        sparkSystem.maxEmitPower = 20;
+                        sparkSystem.updateSpeed = 0.01;
+
+
+                        
+                        // Hide ship and stop engine particles
+                        spaceshipRef.current.allMeshes?.forEach((mesh: Mesh) => {
+                            mesh.visibility = 0;
+                        });
+                        const engineParticles = sceneRef.current.getParticleSystemByID("engineParticles");
+                        if (engineParticles) {
+                            engineParticles.stop();
+                        }
+                        
+                        // Start explosion particle systems
+                        particleSystem.start();
+                        sparkSystem.start();
+
+                        // Cleanup all particle systems
+                        setTimeout(() => {
+                            particleSystem.dispose();
+                            sparkSystem.dispose();
+                        }, 2500);
+                        
+                        // Reset after explosion
+                        setTimeout(() => {
+                            if (spaceshipRef.current.mesh) {
+                                spaceshipRef.current.allMeshes?.forEach((mesh: Mesh) => {
+                                    mesh.visibility = 1;
+                                });
+                                spaceshipRef.current.exploding = false;
+                                // Reset position
+                                ship.position.x = 0;
+                                ship.position.y = 0;
+                                spaceshipRef.current.targetX = 0;
+                                spaceshipRef.current.targetY = 0;
+                                
+                                // Restart engine particles
+                                const engineParticles = sceneRef.current.getParticleSystemByID("engineParticles");
+                                if (engineParticles) {
+                                    engineParticles.start();
+                                }
+                            }
+                        }, 2000);
+                    }
+                    
+                    break;
+                }
+            }
+        }
+
+        // Update engine particles position if spaceship exists
+        if (settingsRef.current.spaceshipEnabled && spaceshipRef.current.mesh && !spaceshipRef.current.exploding) {
+            const engineParticles = sceneRef.current.getParticleSystemByID("engineParticles");
+            if (engineParticles) {
+                engineParticles.emitPosition = new Vector3(0, 0, 1.2);
+            }
+        }
+
         sceneRef.current.render();
         animationFrameRef.current = requestAnimationFrame(updateScene);
     };
 
     useEffect(() => {
+        // setTimeout to enable spaceship
+        setTimeout(() => {
+            if (sceneRef.current) {
+                createSpaceship(sceneRef.current);
+            }
+            settingsRef.current.spaceshipEnabled = true;
+            setSettings({ ...settingsRef.current });
+
+        }, 500);
         if (!canvasRef.current) return;
 
         // Initialize engine and scene
@@ -388,7 +555,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 speed: 0,
                 special: true,
                 arbitraryOrder: 20000,
-                createdAt: Date.now() // Ensure createdAt is set when message is created
+                createdAt: Date.now(),
+                width: 7,
+                height: lineCount * 0.75
             };
         }
 
@@ -400,6 +569,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 createMessage(data.commit.record.text);
             }
         };
+
+        // Create spaceship if enabled
+        if (settings.spaceshipEnabled) {
+            createSpaceship(sceneRef.current);
+        }
 
         // Start render loop
         animationFrameRef.current = requestAnimationFrame(updateScene);
@@ -430,20 +604,205 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         baseSpeed: 1.0,
         audioMultiplier: 1.0,
         specialFrequency: 0.04,
-        audioEnabled: false
+        audioEnabled: false,
+        spaceshipEnabled: false
     });
     const settingsRef = useRef<Settings>({
         discardFraction: discardFraction,
         baseSpeed: 1.0,
         audioMultiplier: 1.0,
         specialFrequency: 0.04,
-        audioEnabled: false
+        audioEnabled: false,
+        spaceshipEnabled: false
     });
     const analyserRef = useRef<AnalyserNode | null>(null);
     const audioDataRef = useRef<Uint8Array | null>(null);
     const mouseTimeoutRef = useRef<NodeJS.Timeout>();
+    const spaceshipRef = useRef<SpaceshipState>({
+        mesh: null,
+        targetX: 0,
+        targetY: 0,
+        exploding: false
+    });
 
-    const handleMouseMove = () => {
+    const createSpaceship = (scene: Scene) => {
+        if (spaceshipRef.current.mesh) return;
+    
+        // Load an environment texture for PBR materials
+        const hdrTexture = CubeTexture.CreateFromPrefilteredData(
+            "https://playground.babylonjs.com/textures/environment.dds",
+            scene
+        );
+        scene.environmentTexture = hdrTexture;
+        scene.createDefaultSkybox(hdrTexture, true, 1000);
+    
+        // Main body - cylindrical shape pointing towards -Z
+        const body = MeshBuilder.CreateCylinder(
+            "body",
+            {
+                height: 2, // Length along Z-axis
+                diameter: 0.6, // Width along X-axis
+                tessellation: 24,
+            },
+            scene
+        );
+        body.rotation.x = Math.PI / 2; // Align cylinder along Z-axis
+        body.position.z = 0; // Center the body
+    
+        // Cockpit - at the front
+        const cockpit = MeshBuilder.CreateSphere(
+            "cockpit",
+            {
+                diameter: 0.4,
+                segments: 16,
+            },
+            scene
+        );
+        cockpit.scaling = new Vector3(0.6, 0.6, 1);
+        cockpit.position = new Vector3(0, 0, -1); // Positioned at the front along -Z
+    
+        // Nose cone - added at the very front
+        const noseCone = MeshBuilder.CreateCylinder(
+            "noseCone",
+            {
+                height: 0.5,
+                diameterTop: 0,
+                diameterBottom: 0.5,
+                tessellation: 24,
+            },
+            scene
+        );
+        noseCone.rotation.x = -Math.PI / 2; // Align along Z-axis
+        noseCone.position.z = -1.3; // Positioned at the very front
+    
+        // Create wings - swept back
+        const createWing = (name: string, isUpper: boolean, isLeft: boolean) => {
+            const wing = MeshBuilder.CreateBox(
+                name,
+                {
+                    height: 0.05, // Thickness of the wing
+                    width: 1.2, // Wing length along X-axis
+                    depth: 0.4, // Wing width along Z-axis
+                },
+                scene
+            );
+    
+            // Position the wing
+            wing.position.x = isLeft ? 0.75 : -0.75;
+            wing.position.y = isUpper ? 0.5 : -0.5;
+            wing.position.z = 0.4; // Slightly towards the back
+    
+           
+    
+            // Rotate the wing to form an X shape
+            const angle = (isUpper ? 1 : -1) * (isLeft ? 1 : -1) * (Math.PI / 6);
+            wing.rotation.z = angle;
+    
+            return wing;
+        };
+    
+        // Create four wings
+        const upperLeftWing = createWing("upperLeftWing", true, true);
+        const upperRightWing = createWing("upperRightWing", true, false);
+        const lowerLeftWing = createWing("lowerLeftWing", false, true);
+        const lowerRightWing = createWing("lowerRightWing", false, false);
+    
+        // PBR Materials
+        const bodyMaterial = new PBRMetallicRoughnessMaterial("bodyMat", scene);
+        bodyMaterial.baseColor = new Color3(0.5, 0.5, 0.5);
+        bodyMaterial.metallic = 0.0; // Non-metallic
+        bodyMaterial.roughness = 1; // Slightly rough surface
+    
+        const cockpitMaterial = new PBRMetallicRoughnessMaterial("cockpitMat", scene);
+        cockpitMaterial.baseColor = new Color3(0.2, 0.4, 0.6);
+        cockpitMaterial.metallic = 0.0;
+        cockpitMaterial.roughness = 0.1; // Smooth surface
+        cockpitMaterial.alpha = 0.9; // Slight transparency
+    
+        const noseConeMaterial = new PBRMetallicRoughnessMaterial("noseConeMat", scene);
+        noseConeMaterial.baseColor = new Color3(0.5, 0.5, 0.5);
+        noseConeMaterial.metallic = 0.0;
+        noseConeMaterial.roughness = 0.7;
+    
+    
+        // Apply materials
+        body.material = bodyMaterial;
+        cockpit.material = cockpitMaterial;
+        noseCone.material = noseConeMaterial;
+        [upperLeftWing, upperRightWing, lowerLeftWing, lowerRightWing].forEach((wing) => {
+            wing.material = bodyMaterial;
+        });
+    
+        // Create container
+        const container = new TransformNode("container", scene);
+    
+        // Parent all meshes to container
+        const allMeshes = [
+            body,
+            cockpit,
+            noseCone,
+            upperLeftWing,
+            upperRightWing,
+            lowerLeftWing,
+            lowerRightWing,
+        ];
+        allMeshes.forEach((mesh) => {
+            mesh.parent = container;
+        });
+    
+        // Add engine light
+        const engineLight = new PointLight("engineLight", new Vector3(0, 0, 1.5), scene);
+        engineLight.diffuse = new Color3(1, 0.5, 0);
+        engineLight.intensity = 0.7;
+        engineLight.range = 3;
+        engineLight.parent = container; // Parent to the container
+        engineLight.position = new Vector3(0, 0, 1.2); // Position at the engine location
+    
+        // Ambient light (increased intensity)
+        const ambientLight = new HemisphericLight(
+            "ambientLight",
+            new Vector3(0, 1, 0),
+            scene
+        );
+        ambientLight.intensity = 0.01;
+        ambientLight.groundColor = new Color3(0.2, 0.2, 0.4);
+    
+        // Position the ship
+        container.position = new Vector3(0, 0, 5);
+
+        // Create engine particle system
+        const engineParticles = new ParticleSystem("engineParticles", 2000, scene);
+        engineParticles.particleTexture = new Texture("https://www.babylonjs.com/assets/Flare.png", scene);
+        engineParticles.renderingGroupId = 1; // Ensure renders on top
+        engineParticles.emitter = container; // Use container as emitter
+        
+        engineParticles.minEmitBox = new Vector3(-0.2, -0.2, 1);
+        engineParticles.maxEmitBox = new Vector3(0.2, 0.2, 1);
+        engineParticles.color1 = new Color4(1, 0.5, 0, 1);
+        engineParticles.color2 = new Color4(1, 0.2, 0, 1);
+        engineParticles.colorDead = new Color4(0, 0, 0, 0);
+        engineParticles.minSize = 0.01;
+        engineParticles.maxSize = 0.2;
+        engineParticles.minLifeTime = 0.01;
+        engineParticles.maxLifeTime = 0.1;
+        engineParticles.emitRate = 15000;
+        engineParticles.blendMode = ParticleSystem.BLENDMODE_ONEONE;
+        engineParticles.gravity = new Vector3(0, 0, 2);
+        engineParticles.direction1 = new Vector3(0, 0, 100);
+        engineParticles.direction2 = new Vector3(0, 0, 100);
+        engineParticles.minEmitPower = 2;
+        engineParticles.maxEmitPower = 4;
+        engineParticles.updateSpeed = 0.01;
+        engineParticles.parent = container;
+        engineParticles.start();
+    
+        spaceshipRef.current.mesh = container as unknown as Mesh;
+        spaceshipRef.current.allMeshes = allMeshes;
+    };
+    
+    
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
         setIsMouseActive(true);
         
         // Clear existing timeout
@@ -455,6 +814,30 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         mouseTimeoutRef.current = setTimeout(() => {
             setIsMouseActive(false);
         }, 2000);
+
+        // Update spaceship target position
+        if (settings.spaceshipEnabled && canvasRef.current) {
+            const rect = canvasRef.current.getBoundingClientRect();
+            let clientX: number, clientY: number;
+            
+            if ('touches' in e) {
+                // Touch event
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                // Mouse event
+                clientX = (e as React.MouseEvent).clientX;
+                clientY = (e as React.MouseEvent).clientY;
+            }
+            
+            // Convert screen coordinates to world coordinates (negate x to fix mirroring)
+            const x = -(((clientX - rect.left) / rect.width) * 14 - 7);
+            const y = -(((clientY - rect.top) / rect.height) * 14 - 7);
+            
+            spaceshipRef.current.targetX = x;
+            spaceshipRef.current.targetY = y;
+            
+        }
     };
 
     useEffect(() => {
@@ -686,6 +1069,37 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 style={{ width: '100%' }}
                             />
                             <span style={{ color: 'white' }}>{(settings.specialFrequency * 100).toFixed(1)}%</span>
+                        </div>
+                        <div style={{ marginBottom: '15px' }}>
+                            <div 
+                                onClick={() => {
+                                    const newValue = !settingsRef.current.spaceshipEnabled;
+                                    settingsRef.current.spaceshipEnabled = newValue;
+                                    setSettings(prev => ({
+                                        ...prev,
+                                        spaceshipEnabled: newValue
+                                    }));
+                                    
+                                    if (newValue && sceneRef.current) {
+                                        createSpaceship(sceneRef.current);
+                                    } else if (!newValue && spaceshipRef.current.mesh) {
+                                        spaceshipRef.current.mesh.dispose();
+                                        spaceshipRef.current.mesh = null;
+                                    }
+                                }}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <label style={{ color: 'white', display: 'block', marginBottom: '5px' }}>
+                                    Enable spaceship:
+                                </label>
+                                <input
+                                    type="checkbox"
+                                    checked={settingsRef.current.spaceshipEnabled}
+                                    onChange={() => {}} // Handle click on parent div instead
+                                    style={{ marginRight: '8px' }}
+                                />
+                                <span style={{ color: 'white' }}>Show spaceship</span>
+                            </div>
                         </div>
                         {
                             showMusic?
