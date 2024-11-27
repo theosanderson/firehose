@@ -325,6 +325,10 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 // Increment score and adjust game parameters
                 scoreRef.current += 1;
                 setScore(scoreRef.current);
+                if (scoreRef.current > maxScoreRef.current) {
+                    maxScoreRef.current = scoreRef.current;
+                    setMaxScore(maxScoreRef.current);
+                }
                 
                 if (scoreRef.current % 10 === 0) {
                     const newSpeed = Math.min(5.0, settingsRef.current.baseSpeed * 1.15);
@@ -484,9 +488,14 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 spaceshipRef.current.targetX = 0;
                                 spaceshipRef.current.targetY = 0;
                                 
-                                // Reset score, speed and special frequency
+                                // Reset score but keep max score
                                 scoreRef.current = 0;
                                 setScore(0);
+                                // Update max score one final time in case we crashed right after getting a point
+                                if (scoreRef.current > maxScoreRef.current) {
+                                    maxScoreRef.current = scoreRef.current;
+                                    setMaxScore(maxScoreRef.current);
+                                }
                                 const defaultSpeed = 1.0;
                                 const defaultSpecialFreq = 0.04;
                                 settingsRef.current.baseSpeed = defaultSpeed;
@@ -633,7 +642,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const [showSettings, setShowSettings] = useState(false);
     const [showMusic, setShowMusic] = useState(false);
     const [score, setScore] = useState(0);
+    const [maxScore, setMaxScore] = useState(0);
     const scoreRef = useRef(0);
+    const maxScoreRef = useRef(0);
     const [settings, setSettings] = useState<Settings>({
         discardFraction: discardFraction,
         baseSpeed: 1.0,
@@ -909,7 +920,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 borderRadius: '8px',
                 opacity: isMouseActive ? 0.7 : 0
             }}>
-                Score: {score} | Speed: {settings.baseSpeed.toFixed(1)}x
+                Score: {score} | Best: {maxScore}
             </div>
             <div style={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '10px' }}>
                 <div
