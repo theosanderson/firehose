@@ -326,10 +326,9 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 scoreRef.current += 1;
                 setScore(scoreRef.current);
                 
-                // Every 10 points, increase speed and reduce discard fraction
                 if (scoreRef.current % 10 === 0) {
-                    const newSpeed = Math.min(5.0, settings.baseSpeed *1.3);
-                    const keepFrac = 1- settings.discardFraction;
+                    const newSpeed = Math.min(5.0, settingsRef.current.baseSpeed * 1.3);
+                    const keepFrac = 1- settingsRef.current.discardFraction;
                     const newKeepFrac = keepFrac*1.3;
 
                     const newDiscardFraction = Math.max(0, 1 - newKeepFrac);
