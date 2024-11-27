@@ -320,8 +320,32 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 message.mesh.dispose();
                 texturePoolRef.current?.release(message.textureObj);
                 messageObjectsRef.current.splice(i, 1);
+                if (message.special){
+                  
+                // Increment score and adjust game parameters
+                scoreRef.current += 1;
+                setScore(scoreRef.current);
+                if (scoreRef.current > maxScoreRef.current) {
+                    maxScoreRef.current = scoreRef.current;
+                    setMaxScore(maxScoreRef.current);
+                }
+                
+                if (scoreRef.current % 10 === 0) {
+                    const newSpeed = Math.min(5.0, settingsRef.current.baseSpeed * 1.12);
+                    const newSpecialFreq = Math.max(0,  1.12*(settingsRef.current.specialFrequency ) );
+                    
+                    setSettings(prev => ({
+                        ...prev,
+                        baseSpeed: newSpeed,
+                        specialFrequency: newSpecialFreq
+                    }));
+                    
+                    settingsRef.current.baseSpeed = newSpeed;
+                    settingsRef.current.specialFrequency = newSpecialFreq;
+                }
             }
         }
+    }
 
         // Handle connecting message fade out
         if (connectingMessageRef.current) {
@@ -464,6 +488,24 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                                 spaceshipRef.current.targetX = 0;
                                 spaceshipRef.current.targetY = 0;
                                 
+                                // Reset score but keep max score
+                                scoreRef.current = 0;
+                                setScore(0);
+                                // Update max score one final time in case we crashed right after getting a point
+                                if (scoreRef.current > maxScoreRef.current) {
+                                    maxScoreRef.current = scoreRef.current;
+                                    setMaxScore(maxScoreRef.current);
+                                }
+                                const defaultSpeed = 1.0;
+                                const defaultSpecialFreq = 0.04;
+                                settingsRef.current.baseSpeed = defaultSpeed;
+                                settingsRef.current.specialFrequency = defaultSpecialFreq;
+                                setSettings(prev => ({
+                                    ...prev,
+                                    baseSpeed: defaultSpeed,
+                                    specialFrequency: defaultSpecialFreq
+                                }));
+                                
                                 // Restart engine particles
                                 const engineParticles = sceneRef.current.getParticleSystemByID("engineParticles");
                                 if (engineParticles) {
@@ -599,6 +641,10 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const [isMouseActive, setIsMouseActive] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [showMusic, setShowMusic] = useState(false);
+    const [score, setScore] = useState(0);
+    const [maxScore, setMaxScore] = useState(0);
+    const scoreRef = useRef(0);
+    const maxScoreRef = useRef(0);
     const [settings, setSettings] = useState<Settings>({
         discardFraction: discardFraction,
         baseSpeed: 1.0,
@@ -862,6 +908,25 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 style={{ width: '100%', height: '100%' }}
                 id="renderCanvas"
             />
+            <div style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                color: 'white',
+                fontSize: '18px',
+                fontFamily: 'sans-serif',
+                padding: '10px',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+                borderRadius: '8px',
+                opacity: 0.7,
+                fontVariant: '',
+                letterSpacing: '0.5px',
+                textAlign: 'right'
+            }}>
+                <span style={{fontSize: '18px'}}>SCORE: {score}</span>
+                <br />
+                <span style={{fontSize: '18px'}}>TOP SCORE: {maxScore}</span>
+            </div>
             <div style={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '10px' }}>
                 <div
                     className="control-button"
@@ -890,27 +955,6 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                     </svg>
                 </div>
                 
-                <div
-                    className="control-button"
-                    style={{
-                        opacity: isMouseActive ? .7 : 0,
-                    }}
-                    onClick={() => setShowSettings(true)}
-                >
-                    <svg 
-                        width="24" 
-                        height="24" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        stroke="white" 
-                        strokeWidth="2" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"
-                    >
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                    </svg>
-                </div>
                 <div
                     className="control-button"
                     style={{
