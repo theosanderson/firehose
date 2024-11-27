@@ -328,19 +328,16 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 
                 if (scoreRef.current % 10 === 0) {
                     const newSpeed = Math.min(5.0, settingsRef.current.baseSpeed * 1.3);
-                    const keepFrac = 1- settingsRef.current.discardFraction;
-                    const newKeepFrac = keepFrac*1.3;
-
-                    const newDiscardFraction = Math.max(0, 1 - newKeepFrac);
+                    const newSpecialFreq = Math.min(0.2, settingsRef.current.specialFrequency + 0.02);
                     
                     setSettings(prev => ({
                         ...prev,
                         baseSpeed: newSpeed,
-                        discardFraction: newDiscardFraction
+                        specialFrequency: newSpecialFreq
                     }));
                     
                     settingsRef.current.baseSpeed = newSpeed;
-                    settingsRef.current.discardFraction = newDiscardFraction;
+                    settingsRef.current.specialFrequency = newSpecialFreq;
                 }
             }
         }
