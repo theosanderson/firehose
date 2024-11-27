@@ -965,7 +965,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         opacity: isMouseActive ? .7 : 0,
                     }}
                     onClick={() => {
-                        const win = window.open('https://bsky.app/profile/theo.io/post/3lb3uzxotxs2w', '_blank');
+                        const win = window.open('https://bsky.app/profile/theo.io/post/3lbvc33xtgc2t', '_blank');
                         win?.focus();
                     }}
                 >
