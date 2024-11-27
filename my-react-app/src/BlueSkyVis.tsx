@@ -913,14 +913,18 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 top: '20px',
                 right: '20px',
                 color: 'white',
-                fontSize: '24px',
+                fontSize: '18px',
                 fontFamily: 'sans-serif',
                 padding: '10px',
                 backgroundColor: 'rgba(0, 0, 0, 0.5)', 
                 borderRadius: '8px',
-                opacity: isMouseActive ? 0.7 : 0
+                opacity: isMouseActive ? 0.7 : 0,
+                fontVariant: 'small-caps',
+                letterSpacing: '0.5px'
             }}>
-                Score: {score} <br></br> Best: {maxScore}
+                <span style={{fontSize: '14px'}}>Score: {score}</span>
+                <br />
+                <span style={{fontSize: '14px'}}>Best: {maxScore}</span>
             </div>
             <div style={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '10px' }}>
                 <div
