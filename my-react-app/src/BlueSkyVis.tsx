@@ -320,15 +320,19 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 message.mesh.dispose();
                 texturePoolRef.current?.release(message.textureObj);
                 messageObjectsRef.current.splice(i, 1);
-                
+                if (message.special){
+                  
                 // Increment score and adjust game parameters
                 scoreRef.current += 1;
                 setScore(scoreRef.current);
                 
                 // Every 10 points, increase speed and reduce discard fraction
                 if (scoreRef.current % 10 === 0) {
-                    const newSpeed = Math.min(5.0, settings.baseSpeed + 0.1);
-                    const newDiscardFraction = Math.max(0, settings.discardFraction - 0.05);
+                    const newSpeed = Math.min(5.0, settings.baseSpeed *1.3);
+                    const keepFrac = 1- settings.discardFraction;
+                    const newKeepFrac = keepFrac*1.3;
+
+                    const newDiscardFraction = Math.max(0, 1 - newKeepFrac);
                     
                     setSettings(prev => ({
                         ...prev,
@@ -341,6 +345,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 }
             }
         }
+    }
 
         // Handle connecting message fade out
         if (connectingMessageRef.current) {
