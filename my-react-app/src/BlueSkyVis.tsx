@@ -920,7 +920,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 borderRadius: '8px',
                 opacity: isMouseActive ? 0.7 : 0
             }}>
-                Score: {score} | Best: {maxScore}
+                Score: {score} <br></br> Best: {maxScore}
             </div>
             <div style={{ position: 'absolute', bottom: '20px', right: '20px', display: 'flex', gap: '10px' }}>
                 <div
