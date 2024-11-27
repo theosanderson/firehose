@@ -331,8 +331,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                 }
                 
                 if (scoreRef.current % 10 === 0) {
-                    const newSpeed = Math.min(5.0, settingsRef.current.baseSpeed * 1.15);
-                    const newSpecialFreq = Math.max(0,  1.15*(settingsRef.current.specialFrequency ) );
+                    const newSpeed = Math.min(5.0, settingsRef.current.baseSpeed * 1.12);
+                    const newSpecialFreq = Math.max(0,  1.12*(settingsRef.current.specialFrequency ) );
                     
                     setSettings(prev => ({
                         ...prev,
