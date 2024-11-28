@@ -552,6 +552,28 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
                         </g>
                     </svg>
                 </div>
+                <a
+                    className="control-button"
+                    style={{
+                        opacity: isMouseActive ? .7 : 0,
+                    }}
+                    href="https://fly-the-firehose.theo.io"
+                >
+                    <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="24" 
+                        height="24" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="white" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                    >
+                        <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2z"></path>
+                        <path d="M12 14l-1.5 4.5L6 18l4.5-1.5L12 22l1.5-4.5L18 18l-4.5-1.5L12 14z"></path>
+                    </svg>
+                </a>
             </div>
             {true && (
                 <div style={{
