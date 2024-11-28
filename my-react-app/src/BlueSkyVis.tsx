@@ -873,8 +873,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
         if (settings.spaceshipEnabled && touchStartX !== null && touchStartY !== null && canvasRef.current) {
             const rect = canvasRef.current.getBoundingClientRect();
-            const deltaX = (e.touches[0].clientX - touchStartX) / rect.width * 28; // Amplify movement
-            const deltaY = (e.touches[0].clientY - touchStartY) / rect.height * 28;
+            const deltaX = (e.touches[0].clientX - touchStartX) / rect.width * 20; // Amplify movement
+            const deltaY = (e.touches[0].clientY - touchStartY) / rect.height * 20;
             
             // Update target position relative to start position
             spaceshipRef.current.targetX = Math.max(-7, Math.min(7, shipStartX - deltaX));
