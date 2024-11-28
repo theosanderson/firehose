@@ -848,41 +848,57 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     
     
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    const [touchStartX, setTouchStartX] = useState<number | null>(null);
+    const [touchStartY, setTouchStartY] = useState<number | null>(null);
+    const [shipStartX, setShipStartX] = useState<number>(0);
+    const [shipStartY, setShipStartY] = useState<number>(0);
+
+    const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
         setIsMouseActive(true);
-        
-        // Clear existing timeout
         if (mouseTimeoutRef.current) {
             clearTimeout(mouseTimeoutRef.current);
         }
-        
-        // Set new timeout to hide after 2 seconds
         mouseTimeoutRef.current = setTimeout(() => {
             setIsMouseActive(false);
         }, 2000);
 
-        // Update spaceship target position
+        if (settings.spaceshipEnabled) {
+            setTouchStartX(e.touches[0].clientX);
+            setTouchStartY(e.touches[0].clientY);
+            setShipStartX(spaceshipRef.current.targetX);
+            setShipStartY(spaceshipRef.current.targetY);
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+        if (settings.spaceshipEnabled && touchStartX !== null && touchStartY !== null && canvasRef.current) {
+            const rect = canvasRef.current.getBoundingClientRect();
+            const deltaX = (e.touches[0].clientX - touchStartX) / rect.width * 28; // Amplify movement
+            const deltaY = (e.touches[0].clientY - touchStartY) / rect.height * 28;
+            
+            // Update target position relative to start position
+            spaceshipRef.current.targetX = Math.max(-7, Math.min(7, shipStartX - deltaX));
+            spaceshipRef.current.targetY = Math.max(-7, Math.min(7, shipStartY - deltaY));
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        setIsMouseActive(true);
+        if (mouseTimeoutRef.current) {
+            clearTimeout(mouseTimeoutRef.current);
+        }
+        mouseTimeoutRef.current = setTimeout(() => {
+            setIsMouseActive(false);
+        }, 2000);
+
+        // Update spaceship target position for mouse movement (absolute positioning)
         if (settings.spaceshipEnabled && canvasRef.current) {
             const rect = canvasRef.current.getBoundingClientRect();
-            let clientX: number, clientY: number;
-            
-            if ('touches' in e) {
-                // Touch event
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                // Mouse event
-                clientX = (e as React.MouseEvent).clientX;
-                clientY = (e as React.MouseEvent).clientY;
-            }
-            
-            // Convert screen coordinates to world coordinates (negate x to fix mirroring)
-            const x = -(((clientX - rect.left) / rect.width) * 14 - 7);
-            const y = -(((clientY - rect.top) / rect.height) * 14 - 7);
+            const x = -(((e.clientX - rect.left) / rect.width) * 14 - 7);
+            const y = -(((e.clientY - rect.top) / rect.height) * 14 - 7);
             
             spaceshipRef.current.targetX = x;
             spaceshipRef.current.targetY = y;
-            
         }
     };
 
@@ -900,8 +916,8 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
         <div 
             style={{ position: 'relative', width: '100%', height: '100%' }} 
             onMouseMove={handleMouseMove}
-            onTouchStart={handleMouseMove}
-            onTouchMove={handleMouseMove}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
         >
             <canvas 
                 ref={canvasRef} 
