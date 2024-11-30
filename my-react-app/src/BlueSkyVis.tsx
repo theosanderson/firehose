@@ -8,7 +8,8 @@ import {
     UniversalCamera,
     StandardMaterial,
     MeshBuilder,
-    Material
+    Material,
+    WebXRDefaultExperience
 } from '@babylonjs/core';
 import { TexturePool } from './TexturePool';
 import { MessageObject, TextureUpdateResult, Settings } from './types';
@@ -85,6 +86,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
     const textWrapperRef = useRef<TextWrapper | null>(null);
     const animationFrameRef = useRef<number>();
     const connectingMessageRef = useRef<MessageObject | null>(null);
+    const xrRef = useRef<any>(null);
 
     const tunnelLength = 40;
 
@@ -401,6 +403,11 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             }
         };
 
+        // Initialize WebXR
+        WebXRDefaultExperience.CreateAsync(sceneRef.current).then((xr) => {
+            xrRef.current = xr;
+        });
+
         // Start render loop
         animationFrameRef.current = requestAnimationFrame(updateScene);
 
@@ -419,6 +426,7 @@ const BlueSkyViz: React.FC<BlueSkyVizProps> = ({
             ws.close();
             engineRef.current?.dispose();
             texturePoolRef.current?.cleanup();
+            xrRef.current?.dispose();
         };
     }, [websocketUrl]);
 

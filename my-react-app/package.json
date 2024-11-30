@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@babylonjs/core": "^7.34.3",
+    "@babylonjs/loaders": "^7.34.3",
+    "@babylonjs/inspector": "^7.34.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
