@@ -11,6 +11,7 @@ import {
     Material,
     WebXRDefaultExperience
 } from '@babylonjs/core';
+import "@babylonjs/loaders/glTF";
 import { TexturePool } from './TexturePool';
 import { MessageObject, TextureUpdateResult, Settings } from './types';
 
